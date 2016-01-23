@@ -1,8 +1,10 @@
 package com.example.threegnome.dealwithit;
 
+import android.animation.ObjectAnimator;
 import android.app.ActionBar;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -16,14 +18,17 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
+import android.media.ExifInterface;
 import android.media.FaceDetector;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
+import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -32,8 +37,11 @@ import android.widget.RelativeLayout;
 
 import org.w3c.dom.Attr;
 
+import java.io.File;
 import java.io.FileDescriptor;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity  {
 
@@ -46,14 +54,13 @@ public class MainActivity extends AppCompatActivity  {
     private final static float GLASSES_PIXEL_CENTER_Y = 50;
     private final static float GLASSES_PIXEL_EYE_DISTANCE_LENGTH = 240;
 
-    private final static float GLASSES_PIXEL_WIDTH = 600;
-    private final static float GLASSES_PIXEL_HEIGHT = 94;
-
     private static final int REQUEST_IMAGE_OPEN = 1;
+
     ImageView imgviewPhoto;
     Bitmap bmpPhoto;
     LayerDrawable lyrdrwPhoto;
 
+    List<ImageView> listImgviewGlasses;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,8 +71,7 @@ public class MainActivity extends AppCompatActivity  {
 
         Drawable[] layers = {new ColorDrawable(Color.TRANSPARENT), new ColorDrawable(Color.TRANSPARENT)};
         lyrdrwPhoto = new LayerDrawable(layers);
-
-
+        listImgviewGlasses = new ArrayList<>();
 
     }
 
@@ -80,6 +86,21 @@ public class MainActivity extends AppCompatActivity  {
             startActivityForResult(test, REQUEST_IMAGE_OPEN);
         }
 
+        removeGlassesfromList();
+
+    }
+
+    public void removeGlassesfromList()
+    {
+        if( !listImgviewGlasses.isEmpty() ) {
+            ImageView I;
+
+            while( listImgviewGlasses.size() != 0 ) {
+                I = listImgviewGlasses.get(0);
+                ((ViewGroup) I.getParent()).removeView(I);
+                listImgviewGlasses.remove(0);
+            }
+        }
     }
 
     public void onClickDetectFaces(View v)
@@ -147,13 +168,28 @@ public class MainActivity extends AppCompatActivity  {
                 //Draw the glasses facting in the locaiton of the image and its scale and center the glasses at the center of the eyes.
 
                 g1.setTranslationX((eyeCenterPoints[i].x * imageMatrix[Matrix.MSCALE_X] + imageMatrix[Matrix.MTRANS_X])
-                        - (GLASSES_PIXEL_CENTER_X  * scaledGlasses));
+                        - (GLASSES_PIXEL_CENTER_X * scaledGlasses));
 
                 g1.setTranslationY((eyeCenterPoints[i].y * imageMatrix[Matrix.MSCALE_Y] + imageMatrix[Matrix.MTRANS_Y])
                         - (GLASSES_PIXEL_CENTER_Y * scaledGlasses));
 
+                listImgviewGlasses.add(g1);
             }
         }
+    }
+
+    public String getRealPathFromURI(Uri uri)
+    {
+        try {
+            String[] proj = {MediaStore.Images.Media.DATA};
+            Cursor cursor = getContentResolver().query(uri,proj,null,null,null);
+            int colIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            return cursor.getString(colIndex);
+            }
+            catch (Exception e) {
+                return uri.getPath();
+            }
     }
 
     @Override
@@ -162,19 +198,23 @@ public class MainActivity extends AppCompatActivity  {
         if (requestCode == REQUEST_IMAGE_OPEN && resultCode == RESULT_OK) {
 
             Uri photoUri = data.getData();
+
             FileDescriptor fd;
 
             try {
 
                 //the exif has tag info on the photo.  Used to get the orientation info of the photo
-               // ExifInterface exif = new ExifInterface(photoUri.getPath());
-               // int rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,ExifInterface.ORIENTATION_NORMAL);
+                ExifInterface exif = new ExifInterface(getRealPathFromURI(photoUri));
+                String exifRotation = exif.getAttribute(ExifInterface.TAG_ORIENTATION);
 
                 fd = getContentResolver().openFileDescriptor(photoUri,"r").getFileDescriptor();
 
                 //Get a bitmap that is scaled down based on the size of the picturelayout
                 bmpPhoto = decodeSampledBitmapFromStream(fd, findViewById(R.id.pictureLayout).getWidth(),
                         findViewById(R.id.pictureLayout).getHeight());
+
+                //rotate the bmp based on Exifinterface data
+                bmpPhoto = rotateBmpUsingExif(bmpPhoto, exifRotation);
 
 
                 updateImgviewPhoto(new BitmapDrawable(getResources(), bmpPhoto),
@@ -186,10 +226,35 @@ public class MainActivity extends AppCompatActivity  {
         }
     }
 
+    private Bitmap rotateBmpUsingExif(Bitmap origBmp, String exifRotation)
+    {
+
+        if (exifRotation != null) {
+            Matrix m = new Matrix();
+
+            switch (Integer.parseInt(exifRotation)) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    m.setRotate(90);
+                    return Bitmap.createBitmap(origBmp, 0, 0, origBmp.getWidth(), origBmp.getHeight(), m, true);
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    m.setRotate(180);
+                    return Bitmap.createBitmap(origBmp, 0, 0, origBmp.getWidth(), origBmp.getHeight(), m, true);
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    m.setRotate(270);
+                    return Bitmap.createBitmap(origBmp, 0, 0, origBmp.getWidth(), origBmp.getHeight(), m, true);
+            }
+        }
+
+        // If there is no change, return the original image
+        return origBmp;
+    }
+
     public static Bitmap decodeSampledBitmapFromStream(FileDescriptor res, int reqWidth, int reqHeight)
     {
         // First decode with inJustDecodeBounds=true to check dimensions
         final BitmapFactory.Options options = new BitmapFactory.Options();
+
+
         options.inJustDecodeBounds = true;
         BitmapFactory.decodeFileDescriptor(res, null, options);
 
@@ -198,6 +263,7 @@ public class MainActivity extends AppCompatActivity  {
 
         //Now return the bitmap!
         options.inJustDecodeBounds = false;
+
         return BitmapFactory.decodeFileDescriptor(res, null, options);
     }
 
@@ -210,13 +276,10 @@ public class MainActivity extends AppCompatActivity  {
 
         if (height > reqHeight || width > reqWidth) {
 
-            final int halfHeight = height ;
-            final int halfWidth = width ;
-
             // Calculate the largest inSampleSize value that is a power of 2 and
             // height and width ARE NOT larger than the requested height and width.
-            while ((halfHeight / inSampleSize) > reqHeight
-                    || (halfWidth / inSampleSize) > reqWidth) {
+            while ((height / inSampleSize) > reqHeight
+                    || (width / inSampleSize) > reqWidth) {
                 inSampleSize *= 2;
             }
         }
@@ -237,6 +300,27 @@ public class MainActivity extends AppCompatActivity  {
         //lyrdrwPhoto.setDrawableByLayerId(lyrdrwPhoto.getId(1), new ColorDrawable(Color.TRANSPARENT));
 
         imgviewPhoto.setImageDrawable(lyrdrwPhoto);
+
+    }
+
+    public void onAnimate(View view)
+    {
+        RelativeLayout pictureLayout = (RelativeLayout) findViewById(R.id.pictureLayout);
+
+        if(!listImgviewGlasses.isEmpty())
+        {
+            for(int i = 0; i < listImgviewGlasses.size(); i++ ) {
+                ImageView glasses = listImgviewGlasses.get(i);
+
+                float startPos = glasses.getTranslationY() - pictureLayout.getHeight();
+                float endPos = glasses.getTranslationY();
+
+                ObjectAnimator glassesAnimator = ObjectAnimator.ofFloat(glasses, "TranslationY", startPos, endPos);
+                glassesAnimator.setDuration(4000);
+                glassesAnimator.start();
+
+            }
+        }
 
     }
 }
@@ -261,6 +345,9 @@ class faceDetect{
 
                 faces[i].getMidPoint(tempF);
                 P[i] = new PointF(tempF.x, tempF.y);
+
+                Log.d("Test", "Eulor X: " + faces[i].pose(FaceDetector.Face.EULER_X)  );
+
             }
 
             return P;
@@ -316,16 +403,13 @@ class faceDetect{
         p.setStrokeWidth(10);
         p.setStyle(Paint.Style.STROKE);
 
-        RectF[] r = new RectF[faceCount];
-
         for( int i =0; faces[i] != null; i++)
         {
 
             PointF pf = new PointF();
             faces[i].getMidPoint(pf);
 
-            r[i] = new RectF(pf.x - (faces[i].eyesDistance()), pf.y - faces[i].eyesDistance()/2,
-                    pf.x + (faces[i].eyesDistance()), pf.y + faces[i].eyesDistance()/2);
+
 
             c.drawRect(pf.x - (faces[i].eyesDistance()), pf.y - faces[i].eyesDistance()/2,
                     pf.x + (faces[i].eyesDistance()), pf.y + faces[i].eyesDistance()/2, p);

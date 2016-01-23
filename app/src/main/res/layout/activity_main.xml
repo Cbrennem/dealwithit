@@ -38,6 +38,13 @@
             android:text="Picture"
             android:onClick="onClickChoosePhoto"
             android:id="@+id/btnPic" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Animate"
+            android:onClick="onAnimate"
+            android:id="@+id/btnAnimate" />
     </LinearLayout>
 
 </LinearLayout>
