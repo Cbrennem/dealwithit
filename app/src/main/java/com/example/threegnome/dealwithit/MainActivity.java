@@ -14,6 +14,7 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -21,6 +22,7 @@ import android.graphics.drawable.LayerDrawable;
 import android.media.ExifInterface;
 import android.media.FaceDetector;
 import android.media.Image;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
@@ -34,6 +36,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import org.w3c.dom.Attr;
 
@@ -59,21 +62,26 @@ public class MainActivity extends AppCompatActivity  {
     ImageView imgviewPhoto;
     Bitmap bmpPhoto;
     LayerDrawable lyrdrwPhoto;
+    MediaPlayer mediaPlayerParty;
 
     List<ImageView> listImgviewGlasses;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         imgviewPhoto = (ImageView) findViewById(R.id.photoView);
 
+        //used to draw a second layer over the image if needed
         Drawable[] layers = {new ColorDrawable(Color.TRANSPARENT), new ColorDrawable(Color.TRANSPARENT)};
         lyrdrwPhoto = new LayerDrawable(layers);
         listImgviewGlasses = new ArrayList<>();
+        mediaPlayerParty = MediaPlayer.create(this, R.raw.wholikestoparty);
 
     }
+
 
     public void onClickChoosePhoto(View v)
     {
@@ -87,9 +95,12 @@ public class MainActivity extends AppCompatActivity  {
         }
 
         removeGlassesfromList();
+        ((TextView) findViewById(R.id.txtDealWithIt)).setVisibility(View.INVISIBLE);
+        ((LinearLayout) findViewById(R.id.mainLayout)).setBackgroundResource(R.color.darkred);
 
     }
 
+    //remove from list of glasses and remove from the screen
     public void removeGlassesfromList()
     {
         if( !listImgviewGlasses.isEmpty() ) {
@@ -103,20 +114,26 @@ public class MainActivity extends AppCompatActivity  {
         }
     }
 
+
+    public void detectFacesAndPrepareGlasses()
+    {
+
+        if (bmpPhoto != null) {
+
+            faceDetect fd = new faceDetect(bmpPhoto, 10);
+
+            drawGlassesAtLocation(fd); // fd.getFacePoints(), fd.getEyeDistance());
+
+        }
+    }
+
+
+
     public void onClickDetectFaces(View v)
     {
         if( bmpPhoto != null) {
 
-
-
             faceDetect fd = new faceDetect(bmpPhoto, 10);
-
-            // Setforeground requires API 23 and above... I think!
-            // imgviewPhoto.setForeground(new BitmapDrawable(getResources(), fd.getBoxFaceOverlay));
-
-            //Draw boxes around eyes
-//            updateImgviewPhoto(new BitmapDrawable(getResources(), bmpPhoto),
-//                    fd.getBoxFaceOverlay());
 
             drawGlassesAtLocation(fd); // fd.getFacePoints(), fd.getEyeDistance());
 
@@ -173,6 +190,8 @@ public class MainActivity extends AppCompatActivity  {
                 g1.setTranslationY((eyeCenterPoints[i].y * imageMatrix[Matrix.MSCALE_Y] + imageMatrix[Matrix.MTRANS_Y])
                         - (GLASSES_PIXEL_CENTER_Y * scaledGlasses));
 
+                g1.setVisibility(ImageView.INVISIBLE);
+
                 listImgviewGlasses.add(g1);
             }
         }
@@ -217,8 +236,11 @@ public class MainActivity extends AppCompatActivity  {
                 bmpPhoto = rotateBmpUsingExif(bmpPhoto, exifRotation);
 
 
+
                 updateImgviewPhoto(new BitmapDrawable(getResources(), bmpPhoto),
                         new ColorDrawable(Color.TRANSPARENT));
+
+                detectFacesAndPrepareGlasses();
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -307,6 +329,11 @@ public class MainActivity extends AppCompatActivity  {
     {
         RelativeLayout pictureLayout = (RelativeLayout) findViewById(R.id.pictureLayout);
 
+        TextView t = (TextView) findViewById(R.id.txtDealWithIt);
+        t.setVisibility(View.VISIBLE);
+        flashBackground();
+        mediaPlayerParty.start();
+
         if(!listImgviewGlasses.isEmpty())
         {
             for(int i = 0; i < listImgviewGlasses.size(); i++ ) {
@@ -315,13 +342,23 @@ public class MainActivity extends AppCompatActivity  {
                 float startPos = glasses.getTranslationY() - pictureLayout.getHeight();
                 float endPos = glasses.getTranslationY();
 
+                glasses.setVisibility(ImageView.VISIBLE);
                 ObjectAnimator glassesAnimator = ObjectAnimator.ofFloat(glasses, "TranslationY", startPos, endPos);
                 glassesAnimator.setDuration(4000);
                 glassesAnimator.start();
 
+
             }
         }
 
+    }
+
+    public void flashBackground()
+    {
+        LinearLayout mainLayout = (LinearLayout) findViewById(R.id.mainLayout);
+        mainLayout.setBackgroundResource(R.drawable.flashcolor);
+        AnimationDrawable anim = (AnimationDrawable)mainLayout.getBackground();
+        anim.start();
     }
 }
 
@@ -345,8 +382,6 @@ class faceDetect{
 
                 faces[i].getMidPoint(tempF);
                 P[i] = new PointF(tempF.x, tempF.y);
-
-                Log.d("Test", "Eulor X: " + faces[i].pose(FaceDetector.Face.EULER_X)  );
 
             }
 

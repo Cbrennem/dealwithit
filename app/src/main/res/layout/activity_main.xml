@@ -18,6 +18,20 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/photoView" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="50dp"
+            android:textAlignment="center"
+            android:text="Deal with it!"
+            android:textColor="@color/darkred"
+            android:id="@+id/txtDealWithIt"
+            android:visibility="invisible"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentEnd="true" />
+
     </RelativeLayout>
 
     <LinearLayout
@@ -28,21 +42,14 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Face"
-            android:onClick="onClickDetectFaces"
-            android:id="@+id/btnDetect" />
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Picture"
+            android:text="Choose Picture"
             android:onClick="onClickChoosePhoto"
             android:id="@+id/btnPic" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Animate"
+            android:text="Deal with it!!!"
             android:onClick="onAnimate"
             android:id="@+id/btnAnimate" />
     </LinearLayout>
