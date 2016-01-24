@@ -67,6 +67,18 @@ public class MainActivity extends AppCompatActivity  {
     List<ImageView> listImgviewGlasses;
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        mediaPlayerParty.setVolume(0, 0);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mediaPlayerParty.setVolume(1,1);
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);

@@ -10,5 +10,6 @@
     <color name="blue">#0000ff</color>
     <color name="violet">#551a8b</color>
     <color name="darkred">#b22c2c</color>
+    <color name="black">#000000</color>
 
 </resources>

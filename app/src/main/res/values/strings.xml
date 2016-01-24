@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Deal with it!</string>
+    <string name="btn_choosepic">Choose Pictures</string>
+    <string name="btn_dealwithit">Deal with it!</string>
 </resources>

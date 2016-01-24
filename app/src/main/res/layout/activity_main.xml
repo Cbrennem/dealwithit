@@ -3,16 +3,18 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mainLayout"
     android:orientation="vertical"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     tools:context="com.example.threegnome.dealwithit.MainActivity"
     android:background="#b22c2c"
-    android:weightSum="1">
+    android:weightSum="1"
+    android:fitsSystemWindows="true">
 
     <RelativeLayout
         android:id="@+id/pictureLayout"
         android:layout_width="match_parent"
-        android:layout_height="547dp">
+        android:layout_height="0dp"
+        android:layout_weight=".8">
 
         <ImageView
             android:layout_width="match_parent"
@@ -37,19 +39,26 @@
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_weight="0.2"
+        android:layout_height="0dp">
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Choose Picture"
+            android:gravity="center"
+            android:text="@string/btn_choosepic"
             android:onClick="onClickChoosePhoto"
+            android:textSize="16sp"
+            android:textColor="@color/black"
             android:id="@+id/btnPic" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Deal with it!!!"
+            android:gravity="center"
+            android:text="@string/btn_dealwithit"
+            android:textColor="@color/black"
+            android:textSize="16sp"
             android:onClick="onAnimate"
             android:id="@+id/btnAnimate" />
     </LinearLayout>
