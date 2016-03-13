@@ -6,7 +6,7 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     tools:context="com.example.threegnome.dealwithit.MainActivity"
-    android:background="#b22c2c"
+    android:background="@color/black"
     android:weightSum="1"
     android:fitsSystemWindows="true">
 
@@ -33,7 +33,7 @@
             android:textSize="50sp"
             android:textAlignment="center"
             android:text="Deal with it!"
-            android:textColor="@color/darkred"
+            android:textColor="@color/black"
             android:id="@+id/txtDealWithIt"
             android:visibility="invisible"
             android:layout_alignParentBottom="true"
@@ -50,7 +50,6 @@
 
         <ImageButton
             style="@style/toolbar_buttons"
-            android:onClick="onClickChoosePhoto"
             android:id="@+id/btnPic"
             android:scaleType="fitXY"
             android:src="@drawable/ic_portrait_black_24dp"
@@ -58,17 +57,11 @@
 
         <ImageButton
             style="@style/toolbar_buttons"
-            android:onClick="onAnimate"
             android:id="@+id/btnAnimate"
             android:scaleType="centerInside"
             android:src="@drawable/dealwithitglasses"
             android:layout_gravity="center"/>
 
-        <ImageButton
-            style="@style/toolbar_buttons"
-            android:onClick="onEdit"
-            android:src="@drawable/ic_edit_black_24dp"
-            android:layout_gravity="end"/>
 
     </LinearLayout>
 

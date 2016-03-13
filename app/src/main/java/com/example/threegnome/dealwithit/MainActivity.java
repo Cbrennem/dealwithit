@@ -116,6 +116,12 @@ public class MainActivity extends AppCompatActivity  {
 
     }
 
+    public void onEdit(View view) {
+        Intent intent = new Intent(this, EditorActivity.class);
+        startActivity(intent);
+
+    }
+
     //remove from list of glasses and remove from the screen
     public void removeGlassesfromList()
     {
@@ -376,6 +382,8 @@ public class MainActivity extends AppCompatActivity  {
         AnimationDrawable anim = (AnimationDrawable)mainLayout.getBackground();
         anim.start();
     }
+
+
 }
 
 class faceDetect{
