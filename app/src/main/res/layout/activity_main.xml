@@ -30,7 +30,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="50dp"
+            android:textSize="50sp"
             android:textAlignment="center"
             android:text="Deal with it!"
             android:textColor="@color/darkred"
@@ -45,27 +45,30 @@
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary">
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="@string/btn_choosepic"
+        <ImageButton
+            style="@style/toolbar_buttons"
             android:onClick="onClickChoosePhoto"
-            android:textSize="16sp"
-            android:textColor="@color/black"
-            android:id="@+id/btnPic" />
+            android:id="@+id/btnPic"
+            android:scaleType="fitXY"
+            android:src="@drawable/ic_portrait_black_24dp"
+            android:layout_gravity="start"/>
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="@string/btn_dealwithit"
-            android:textColor="@color/black"
-            android:textSize="16sp"
+        <ImageButton
+            style="@style/toolbar_buttons"
             android:onClick="onAnimate"
-            android:id="@+id/btnAnimate" />
+            android:id="@+id/btnAnimate"
+            android:scaleType="centerInside"
+            android:src="@drawable/dealwithitglasses"
+            android:layout_gravity="center"/>
+
+        <ImageButton
+            style="@style/toolbar_buttons"
+            android:src="@drawable/ic_edit_black_24dp"
+            android:layout_gravity="end"/>
+
     </LinearLayout>
 
 </LinearLayout>
