@@ -2,6 +2,7 @@ package com.example.threegnome.dealwithit;
 
 import android.animation.ObjectAnimator;
 import android.app.ActionBar;
+import android.app.DialogFragment;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -41,8 +42,10 @@ import android.widget.TextView;
 
 import org.w3c.dom.Attr;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -116,9 +119,14 @@ public class MainActivity extends AppCompatActivity  {
 
     }
 
+    public void onChangeMusic(View view) {
+        DialogFragment changeMusicFragment = new pickMusicDialogFragment();
+        changeMusicFragment.show(getFragmentManager(),"Change Music");
+
+    }
+
     public void onEdit(View view) {
-        Intent intent = new Intent(this, EditorActivity.class);
-        startActivity(intent);
+
 
     }
 
@@ -384,6 +392,7 @@ public class MainActivity extends AppCompatActivity  {
     }
 
 
+
 }
 
 class faceDetect{
@@ -480,5 +489,4 @@ class faceDetect{
     }
 
 }
-
 

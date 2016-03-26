@@ -8,11 +8,14 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:colorBackground">@color/background_material_dark</item>
     </style>
 
     <style name="toolbar_buttons">
-        <item name="android:layout_width">70dp</item>
-        <item name="android:layout_height">70dp</item>
+        <item name="android:scaleType">centerInside</item>
+        <item name="android:layout_width">60dp</item>
+        <item name="android:layout_height">60dp</item>
+        <item name="android:background">@null</item>
     </style>
 
 </resources>
