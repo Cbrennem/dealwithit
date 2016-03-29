@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array
+        name="Music_list">
+        <item>"Who Likes to Party"</item>
+        <item>"Spazzmatica Polka</item>
+        <item>"Choose:"</item>
+    </array>
+</resources>

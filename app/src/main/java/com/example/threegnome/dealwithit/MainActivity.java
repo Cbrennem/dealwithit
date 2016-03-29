@@ -73,13 +73,13 @@ public class MainActivity extends AppCompatActivity  {
     @Override
     protected void onPause() {
         super.onPause();
-        mediaPlayerParty.setVolume(0, 0);
+ //       mediaPlayerParty.setVolume(0, 0);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        mediaPlayerParty.setVolume(1,1);
+ //       mediaPlayerParty.setVolume(1,1);
     }
 
     @Override
@@ -115,13 +115,25 @@ public class MainActivity extends AppCompatActivity  {
 
         removeGlassesfromList();
         ((TextView) findViewById(R.id.txtDealWithIt)).setVisibility(View.INVISIBLE);
-        ((LinearLayout) findViewById(R.id.mainLayout)).setBackgroundResource(R.color.darkred);
+        ((LinearLayout) findViewById(R.id.mainLayout)).setBackgroundResource(R.color.background);
 
     }
 
     public void onChangeMusic(View view) {
         DialogFragment changeMusicFragment = new pickMusicDialogFragment();
-        changeMusicFragment.show(getFragmentManager(),"Change Music");
+        changeMusicFragment.show(getFragmentManager(), "Change Music");
+    }
+
+    public void doSelectMusic(){
+//        mediaPlayerParty.release();
+//        mediaPlayerParty.reset();
+//        mediaPlayerParty.create(this, R.raw.spazzmaticapolka);
+    }
+
+    public void onEditText(View view) {
+        DialogFragment changeTextFragment = new changeTextDialogFragment();
+        changeTextFragment.show(getFragmentManager(), "Change Text");
+
 
     }
 

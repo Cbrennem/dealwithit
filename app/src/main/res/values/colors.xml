@@ -3,6 +3,7 @@
     <color name="colorPrimary">#4caf50</color>
     <color name="colorPrimaryDark">#388e3c</color>
     <color name="colorAccent">#80d8ff</color>
+    <color name="background">#628ee6</color>
 
     <color name="red">#ff0000</color>
     <color name="orange">#ffa500</color>
@@ -11,8 +12,6 @@
     <color name="blue">#0000ff</color>
     <color name="violet">#551a8b</color>
     <color name="darkred">#b22c2c</color>
-    <color name="black">#6190e0</color>
-    <color name="background_material_dark">#628ee6</color>
 
 
 </resources>

@@ -67,6 +67,11 @@
 
         <ImageButton
             style="@style/toolbar_buttons"
+            android:onClick="onEditText"
+            android:src="@drawable/ic_text_fields_black_24dp" />]
+
+        <ImageButton
+            style="@style/toolbar_buttons"
             android:onClick="onEdit"
             android:src="@drawable/ic_edit_black_24dp" />
 
