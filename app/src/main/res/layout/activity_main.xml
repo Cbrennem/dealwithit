@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/mainLayout"
     android:orientation="vertical"
     android:layout_width="wrap_content"
@@ -13,7 +14,8 @@
         android:id="@+id/topToolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?attr/colorPrimary"/>
+        android:background="?attr/colorPrimary"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"/>
 
     <RelativeLayout
         android:id="@+id/pictureLayout"
@@ -31,7 +33,7 @@
             android:layout_height="wrap_content"
             android:textSize="50sp"
             android:textAlignment="center"
-            android:text="Deal with it!"
+            android:text="@string/mainText"
             android:textColor="@color/darkred"
             android:id="@+id/txtDealWithIt"
             android:visibility="invisible"
@@ -41,12 +43,17 @@
 
     </RelativeLayout>
 
-    <LinearLayout
-        android:orientation="horizontal"
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/btmToolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?attr/colorPrimary">
+        android:background="?attr/colorPrimary"
+        app:contentInsetStart="0dp"
+        app:contentInsetLeft="0dp"
 
+        >
+
+        <!--
         <ImageButton
             style="@style/toolbar_buttons"
             android:onClick="onClickChoosePhoto"
@@ -68,13 +75,24 @@
         <ImageButton
             style="@style/toolbar_buttons"
             android:onClick="onEditText"
-            android:src="@drawable/ic_text_fields_black_24dp" />]
+            android:src="@drawable/ic_text_fields_black_24dp" />
 
         <ImageButton
             style="@style/toolbar_buttons"
             android:onClick="onEdit"
             android:src="@drawable/ic_edit_black_24dp" />
 
-    </LinearLayout>
+        <ImageButton
+            style="@style/toolbar_buttons"
+            android:onClick="onEdit"
+            android:src="@drawable/ic_edit_black_24dp" />
+
+        <ImageButton
+            style="@style/toolbar_buttons"
+            android:onClick="onEdit"
+            android:src="@drawable/ic_edit_black_24dp" />
+-->
+
+    </android.support.v7.widget.Toolbar>
 
 </LinearLayout>

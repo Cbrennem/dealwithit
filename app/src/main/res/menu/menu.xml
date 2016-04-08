@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/btnPic"
+        android:icon="@drawable/ic_portrait_black_24dp"
+        android:title="Choose Picture"
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/btnAnimate"
+        android:icon="@drawable/dealwithitglasses"
+        android:title="Animate"
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/btnChangeMusic"
+        android:icon="@drawable/ic_audiotrack_black_24dp"
+        android:title="Choose Music"
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/btnEditText"
+        android:icon="@drawable/ic_text_fields_black_24dp"
+        android:title="Edit Text"
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/btnEdit"
+        android:icon="@drawable/ic_edit_black_24dp"
+        android:title="Edit"
+        app:showAsAction="always"/>
+
+</menu>

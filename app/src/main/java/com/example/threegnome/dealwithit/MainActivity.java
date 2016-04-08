@@ -4,6 +4,7 @@ import android.animation.ObjectAnimator;
 import android.app.ActionBar;
 import android.app.DialogFragment;
 import android.content.Intent;
+import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -31,6 +32,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -73,13 +75,22 @@ public class MainActivity extends AppCompatActivity  {
     @Override
     protected void onPause() {
         super.onPause();
- //       mediaPlayerParty.setVolume(0, 0);
+        mediaPlayerParty.setVolume(0, 0);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
- //       mediaPlayerParty.setVolume(1,1);
+        mediaPlayerParty.setVolume(1, 1);
+    }
+
+
+    //Inflate menus.xml menu list to top toolbar
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        getMenuInflater().inflate(R.menu.menu, menu);
+        return true;
     }
 
     @Override
@@ -88,8 +99,12 @@ public class MainActivity extends AppCompatActivity  {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.topToolbar);
-        setSupportActionBar(toolbar);
+        Toolbar topToolbar = (Toolbar) findViewById(R.id.topToolbar);
+        setSupportActionBar(topToolbar);
+
+        Toolbar btmToolbar = (Toolbar) findViewById(R.id.btmToolbar);
+        btmToolbar.inflateMenu(R.menu.menu);
+
 
         imgviewPhoto = (ImageView) findViewById(R.id.photoView);
 
@@ -124,10 +139,26 @@ public class MainActivity extends AppCompatActivity  {
         changeMusicFragment.show(getFragmentManager(), "Change Music");
     }
 
-    public void doSelectMusic(){
-//        mediaPlayerParty.release();
-//        mediaPlayerParty.reset();
-//        mediaPlayerParty.create(this, R.raw.spazzmaticapolka);
+    public void doSelectMusic(int which) {
+
+        AssetFileDescriptor afd = null;
+
+        if(which == 0 ) {
+            afd = this.getResources().openRawResourceFd(R.raw.wholikestoparty);
+        }
+        if(which == 1) {
+            afd = this.getResources().openRawResourceFd(R.raw.spazzmaticapolka);
+        }
+
+        try {
+            mediaPlayerParty.reset();
+            mediaPlayerParty.setDataSource(afd.getFileDescriptor(),afd.getStartOffset(),afd.getDeclaredLength());
+            mediaPlayerParty.prepare();
+            afd.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public void onEditText(View view) {
