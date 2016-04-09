@@ -50,48 +50,7 @@
         android:background="?attr/colorPrimary"
         app:contentInsetStart="0dp"
         app:contentInsetLeft="0dp"
-
         >
-
-        <!--
-        <ImageButton
-            style="@style/toolbar_buttons"
-            android:onClick="onClickChoosePhoto"
-            android:id="@+id/btnPic"
-            android:src="@drawable/ic_portrait_black_24dp" />
-
-        <ImageButton
-            style="@style/toolbar_buttons"
-            android:onClick="onAnimate"
-            android:id="@+id/btnAnimate"
-            android:src="@drawable/dealwithitglasses"
-            android:padding="10dp"/>
-
-        <ImageButton
-            style="@style/toolbar_buttons"
-            android:onClick="onChangeMusic"
-            android:src="@drawable/ic_audiotrack_black_24dp"/>
-
-        <ImageButton
-            style="@style/toolbar_buttons"
-            android:onClick="onEditText"
-            android:src="@drawable/ic_text_fields_black_24dp" />
-
-        <ImageButton
-            style="@style/toolbar_buttons"
-            android:onClick="onEdit"
-            android:src="@drawable/ic_edit_black_24dp" />
-
-        <ImageButton
-            style="@style/toolbar_buttons"
-            android:onClick="onEdit"
-            android:src="@drawable/ic_edit_black_24dp" />
-
-        <ImageButton
-            style="@style/toolbar_buttons"
-            android:onClick="onEdit"
-            android:src="@drawable/ic_edit_black_24dp" />
--->
 
     </android.support.v7.widget.Toolbar>
 

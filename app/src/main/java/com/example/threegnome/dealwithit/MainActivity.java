@@ -30,9 +30,11 @@ import android.os.Build;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.ActionMenuView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -41,6 +43,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.w3c.dom.Attr;
 
@@ -50,6 +53,7 @@ import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.EventListener;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity  {
@@ -89,7 +93,6 @@ public class MainActivity extends AppCompatActivity  {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
-        getMenuInflater().inflate(R.menu.menu, menu);
         return true;
     }
 
@@ -102,8 +105,35 @@ public class MainActivity extends AppCompatActivity  {
         Toolbar topToolbar = (Toolbar) findViewById(R.id.topToolbar);
         setSupportActionBar(topToolbar);
 
+        //Code relating to bottom toolbar
+
         Toolbar btmToolbar = (Toolbar) findViewById(R.id.btmToolbar);
         btmToolbar.inflateMenu(R.menu.menu);
+
+        btmToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+
+                switch (item.getItemId()) {
+                    case R.id.btnPic:
+                        onClickChoosePhoto();
+                        return true;
+                    case R.id.btnAnimate:
+                        onAnimate();
+                        return true;
+                    case R.id.btnChangeMusic:
+                        onChangeMusic();
+                        return true;
+                    case R.id.btnEditText:
+                        onEditText();
+                        return true;
+                }
+
+                return false;
+            }
+        });
+
+
 
 
         imgviewPhoto = (ImageView) findViewById(R.id.photoView);
@@ -117,7 +147,7 @@ public class MainActivity extends AppCompatActivity  {
     }
 
 
-    public void onClickChoosePhoto(View v)
+    public void onClickChoosePhoto()
     {
 
         Intent test = new Intent();
@@ -134,7 +164,7 @@ public class MainActivity extends AppCompatActivity  {
 
     }
 
-    public void onChangeMusic(View view) {
+    public void onChangeMusic() {
         DialogFragment changeMusicFragment = new pickMusicDialogFragment();
         changeMusicFragment.show(getFragmentManager(), "Change Music");
     }
@@ -161,7 +191,7 @@ public class MainActivity extends AppCompatActivity  {
 
     }
 
-    public void onEditText(View view) {
+    public void onEditText() {
         DialogFragment changeTextFragment = new changeTextDialogFragment();
         changeTextFragment.show(getFragmentManager(), "Change Text");
 
@@ -398,7 +428,7 @@ public class MainActivity extends AppCompatActivity  {
 
     }
 
-    public void onAnimate(View view)
+    public void onAnimate()
     {
         RelativeLayout pictureLayout = (RelativeLayout) findViewById(R.id.pictureLayout);
 
