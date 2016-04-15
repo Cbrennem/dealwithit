@@ -1,7 +1,6 @@
 package com.example.threegnome.dealwithit;
 
 import android.animation.ObjectAnimator;
-import android.app.ActionBar;
 import android.app.DialogFragment;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
@@ -14,8 +13,6 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PointF;
-import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
@@ -23,42 +20,32 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.media.ExifInterface;
 import android.media.FaceDetector;
-import android.media.Image;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.ActionMenuView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import org.w3c.dom.Attr;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileDescriptor;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.EventListener;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity  {
 
 
+    //Option data
+    int MUSIC_CHOICE_OPTION = 0;
 
     private static final String TAG = "Dealwithit";
     private static final boolean DEBUG = true;
@@ -68,6 +55,8 @@ public class MainActivity extends AppCompatActivity  {
     private final static float GLASSES_PIXEL_EYE_DISTANCE_LENGTH = 240;
 
     private static final int REQUEST_IMAGE_OPEN = 1;
+
+
 
     ImageView imgviewPhoto;
     Bitmap bmpPhoto;
@@ -133,9 +122,6 @@ public class MainActivity extends AppCompatActivity  {
             }
         });
 
-
-
-
         imgviewPhoto = (ImageView) findViewById(R.id.photoView);
 
         //used to draw a second layer over the image if needed
@@ -175,9 +161,11 @@ public class MainActivity extends AppCompatActivity  {
 
         if(which == 0 ) {
             afd = this.getResources().openRawResourceFd(R.raw.wholikestoparty);
+            MUSIC_CHOICE_OPTION = 0;
         }
         if(which == 1) {
             afd = this.getResources().openRawResourceFd(R.raw.spazzmaticapolka);
+            MUSIC_CHOICE_OPTION = 1;
         }
 
         try {

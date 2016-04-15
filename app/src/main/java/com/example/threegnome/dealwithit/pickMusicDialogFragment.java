@@ -8,23 +8,25 @@ import android.os.Bundle;
 
 public class pickMusicDialogFragment extends DialogFragment {
 
-    int checkedItem = 0;
+
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
+
+        int checkedItem = ((MainActivity)getActivity()).MUSIC_CHOICE_OPTION;
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Choose Music")
                 .setSingleChoiceItems(R.array.Music_list, checkedItem, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        checkedItem = which;
+
                     }
                 })
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        ((MainActivity)getActivity()).doSelectMusic(checkedItem);
+                        ((MainActivity)getActivity()).doSelectMusic(which);
                     }
                 })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
