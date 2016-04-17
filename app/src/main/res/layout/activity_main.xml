@@ -28,12 +28,14 @@
             android:layout_height="match_parent"
             android:id="@+id/photoView" />
 
-        <TextView
+        <EditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="50sp"
             android:textAlignment="center"
             android:text="@string/mainText"
+            android:inputType="none"
+            android:enabled ="false"
             android:textColor="@color/darkred"
             android:id="@+id/txtDealWithIt"
             android:visibility="invisible"

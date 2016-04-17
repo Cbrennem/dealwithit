@@ -2,6 +2,7 @@ package com.example.threegnome.dealwithit;
 
 import android.animation.ObjectAnimator;
 import android.app.DialogFragment;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetFileDescriptor;
@@ -27,18 +28,26 @@ import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.text.InputType;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import org.w3c.dom.Text;
+
 import java.io.FileDescriptor;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,6 +65,7 @@ public class MainActivity extends AppCompatActivity  {
     private final static float GLASSES_PIXEL_EYE_DISTANCE_LENGTH = 240;
 
     private static final int REQUEST_IMAGE_OPEN = 1;
+    private static final int REQUEST_AUDIO_OPEN = 2;
 
 
 
@@ -146,48 +156,133 @@ public class MainActivity extends AppCompatActivity  {
         }
 
         removeGlassesfromList();
-        ((TextView) findViewById(R.id.txtDealWithIt)).setVisibility(View.INVISIBLE);
+        //ToDo: Stop and reset the Media Player
+        ((EditText) findViewById(R.id.txtDealWithIt)).setVisibility(View.INVISIBLE);
         ((LinearLayout) findViewById(R.id.mainLayout)).setBackgroundResource(R.color.background);
 
     }
 
     public void onChangeMusic() {
+
         DialogFragment changeMusicFragment = new pickMusicDialogFragment();
         changeMusicFragment.show(getFragmentManager(), "Change Music");
+
     }
 
     public void doSelectMusic(int which) {
 
-        AssetFileDescriptor afd = null;
+        if( which != 2 ) {
 
-        if(which == 0 ) {
-            afd = this.getResources().openRawResourceFd(R.raw.wholikestoparty);
-            MUSIC_CHOICE_OPTION = 0;
+            AssetFileDescriptor afd = null;
+
+            if (which == 0) {
+                afd = this.getResources().openRawResourceFd(R.raw.wholikestoparty);
+                MUSIC_CHOICE_OPTION = 0;
+            }
+            if (which == 1) {
+                afd = this.getResources().openRawResourceFd(R.raw.spazzmaticapolka);
+                MUSIC_CHOICE_OPTION = 1;
+            }
+
+            try {
+                mediaPlayerParty.reset();
+                mediaPlayerParty.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getDeclaredLength());
+                mediaPlayerParty.prepare();
+                afd.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
         }
-        if(which == 1) {
-            afd = this.getResources().openRawResourceFd(R.raw.spazzmaticapolka);
-            MUSIC_CHOICE_OPTION = 1;
-        }
+
         if (which == 2 ) {
-            MUSIC_CHOICE_OPTION = 2;
-        }
+            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
+            startActivityForResult(intent,REQUEST_AUDIO_OPEN);
 
-        try {
-            mediaPlayerParty.reset();
-            mediaPlayerParty.setDataSource(afd.getFileDescriptor(),afd.getStartOffset(),afd.getDeclaredLength());
-            mediaPlayerParty.prepare();
-            afd.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+            MUSIC_CHOICE_OPTION = 2;
         }
 
     }
 
+    @Override
+    protected void onActivityResult (int requestCode, int resultCode, Intent data)
+    {
+
+        if (requestCode == REQUEST_AUDIO_OPEN && resultCode == RESULT_OK) {
+
+            Uri uri = data.getData();
+
+            try {
+                mediaPlayerParty.reset();
+                mediaPlayerParty.setDataSource(this, uri);
+                mediaPlayerParty.prepare();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (requestCode == REQUEST_IMAGE_OPEN && resultCode == RESULT_OK) {
+
+            Uri photoUri = data.getData();
+
+            FileDescriptor fd;
+
+            try {
+
+                //the exif has tag info on the photo.  Used to get the orientation info of the photo
+                ExifInterface exif = new ExifInterface(getRealPathFromURI(photoUri));
+                String exifRotation = exif.getAttribute(ExifInterface.TAG_ORIENTATION);
+
+                fd = getContentResolver().openFileDescriptor(photoUri,"r").getFileDescriptor();
+
+                //Get a bitmap that is scaled down based on the size of the picturelayout
+                bmpPhoto = decodeSampledBitmapFromStream(fd, findViewById(R.id.pictureLayout).getWidth(),
+                        findViewById(R.id.pictureLayout).getHeight());
+
+                //rotate the bmp based on Exifinterface data
+                bmpPhoto = rotateBmpUsingExif(bmpPhoto, exifRotation);
+
+                updateImgviewPhoto(new BitmapDrawable(getResources(), bmpPhoto),
+                        new ColorDrawable(Color.TRANSPARENT));
+
+                detectFacesAndPrepareGlasses();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
     public void onEditText() {
-        DialogFragment changeTextFragment = new changeTextDialogFragment();
-        changeTextFragment.show(getFragmentManager(), "Change Text");
 
+        final EditText txtView = (EditText) findViewById(R.id.txtDealWithIt);
+        txtView.setEnabled(true);
+        txtView.setVisibility(EditText.VISIBLE);
+        txtView.setInputType(InputType.TYPE_CLASS_TEXT);
+        txtView.selectAll();
 
+        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.showSoftInput(txtView,InputMethodManager.SHOW_IMPLICIT);
+
+        txtView.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+
+                if((event.getAction() == KeyEvent.ACTION_DOWN) &&
+                        (keyCode == KeyEvent.KEYCODE_ENTER)) {
+
+                    txtView.setInputType(InputType.TYPE_NULL);
+                    txtView.clearFocus();
+                    txtView.setSelection(0);
+                    txtView.setBackground(null);
+                    txtView.setEnabled(false);
+
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     public void onEdit(View view) {
@@ -306,42 +401,6 @@ public class MainActivity extends AppCompatActivity  {
             }
     }
 
-    @Override
-    protected void onActivityResult (int requestCode, int resultCode, Intent data)
-    {
-        if (requestCode == REQUEST_IMAGE_OPEN && resultCode == RESULT_OK) {
-
-            Uri photoUri = data.getData();
-
-            FileDescriptor fd;
-
-            try {
-
-                //the exif has tag info on the photo.  Used to get the orientation info of the photo
-                ExifInterface exif = new ExifInterface(getRealPathFromURI(photoUri));
-                String exifRotation = exif.getAttribute(ExifInterface.TAG_ORIENTATION);
-
-                fd = getContentResolver().openFileDescriptor(photoUri,"r").getFileDescriptor();
-
-                //Get a bitmap that is scaled down based on the size of the picturelayout
-                bmpPhoto = decodeSampledBitmapFromStream(fd, findViewById(R.id.pictureLayout).getWidth(),
-                        findViewById(R.id.pictureLayout).getHeight());
-
-                //rotate the bmp based on Exifinterface data
-                bmpPhoto = rotateBmpUsingExif(bmpPhoto, exifRotation);
-
-
-
-                updateImgviewPhoto(new BitmapDrawable(getResources(), bmpPhoto),
-                        new ColorDrawable(Color.TRANSPARENT));
-
-                detectFacesAndPrepareGlasses();
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
     private Bitmap rotateBmpUsingExif(Bitmap origBmp, String exifRotation)
     {
@@ -424,7 +483,7 @@ public class MainActivity extends AppCompatActivity  {
     {
         RelativeLayout pictureLayout = (RelativeLayout) findViewById(R.id.pictureLayout);
 
-        TextView t = (TextView) findViewById(R.id.txtDealWithIt);
+        EditText t = (EditText) findViewById(R.id.txtDealWithIt);
         t.setVisibility(View.VISIBLE);
         flashBackground();
         mediaPlayerParty.start();
