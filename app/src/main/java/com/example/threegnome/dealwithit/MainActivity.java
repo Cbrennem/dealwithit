@@ -3,6 +3,7 @@ package com.example.threegnome.dealwithit;
 import android.animation.ObjectAnimator;
 import android.app.DialogFragment;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -166,6 +167,9 @@ public class MainActivity extends AppCompatActivity  {
         if(which == 1) {
             afd = this.getResources().openRawResourceFd(R.raw.spazzmaticapolka);
             MUSIC_CHOICE_OPTION = 1;
+        }
+        if (which == 2 ) {
+            MUSIC_CHOICE_OPTION = 2;
         }
 
         try {
