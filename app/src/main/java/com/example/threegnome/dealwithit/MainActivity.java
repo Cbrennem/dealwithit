@@ -4,7 +4,6 @@ import android.animation.ObjectAnimator;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -30,26 +29,25 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
-
-import org.w3c.dom.Text;
-
 import java.io.FileDescriptor;
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.google.android.gms.vision.Frame;
+import com.google.android.gms.vision.face.*;
+// import com.google.android.gms.vision.face.FaceDetector;
 
 public class MainActivity extends AppCompatActivity  {
 
@@ -57,13 +55,16 @@ public class MainActivity extends AppCompatActivity  {
     //Option data
     int MUSIC_CHOICE_OPTION = 0;
 
+    //for LOG
     private static final String TAG = "Dealwithit";
     private static final boolean DEBUG = true;
 
+    //The hard coded center for the glasses picture and the distances between eyes
     private final static float GLASSES_PIXEL_CENTER_X = 370;
     private final static float GLASSES_PIXEL_CENTER_Y = 50;
     private final static float GLASSES_PIXEL_EYE_DISTANCE_LENGTH = 240;
 
+    //Intent Codes
     private static final int REQUEST_IMAGE_OPEN = 1;
     private static final int REQUEST_AUDIO_OPEN = 2;
 
@@ -155,14 +156,34 @@ public class MainActivity extends AppCompatActivity  {
             startActivityForResult(test, REQUEST_IMAGE_OPEN);
         }
 
+
         removeGlassesfromList();
-        //ToDo: Stop and reset the Media Player
-        ((EditText) findViewById(R.id.txtDealWithIt)).setVisibility(View.INVISIBLE);
-        ((LinearLayout) findViewById(R.id.mainLayout)).setBackgroundResource(R.color.background);
+
+        resetHomeScreen();
+
 
     }
 
+    public void resetHomeScreen() {
+
+
+        mediaPlayerParty.stop();
+
+        try {
+            mediaPlayerParty.prepare();
+            mediaPlayerParty.seekTo(0);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        ((EditText) findViewById(R.id.txtDealWithIt)).setVisibility(View.INVISIBLE);
+        ((LinearLayout) findViewById(R.id.mainLayout)).setBackgroundResource(R.color.background);
+    }
+
     public void onChangeMusic() {
+
+        resetHomeScreen();
 
         DialogFragment changeMusicFragment = new pickMusicDialogFragment();
         changeMusicFragment.show(getFragmentManager(), "Change Music");
@@ -192,7 +213,6 @@ public class MainActivity extends AppCompatActivity  {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         }
 
         if (which == 2 ) {
@@ -201,6 +221,9 @@ public class MainActivity extends AppCompatActivity  {
 
             MUSIC_CHOICE_OPTION = 2;
         }
+
+
+
 
     }
 
@@ -275,7 +298,6 @@ public class MainActivity extends AppCompatActivity  {
                     txtView.setInputType(InputType.TYPE_NULL);
                     txtView.clearFocus();
                     txtView.setSelection(0);
-                    txtView.setBackground(null);
                     txtView.setEnabled(false);
 
                     return true;
@@ -571,6 +593,21 @@ class faceDetect{
 
         if (bmp != null)
         {
+
+            /*
+            Frame.Builder frameBuilder = new Frame.Builder();
+            frameBuilder.setBitmap(bmp);
+            Frame frame = frameBuilder.build();
+
+            com.google.android.gms.vision.face.FaceDetector.Builder fdb =
+                    new com.google.android.gms.vision.face.FaceDetector.Builder(null);
+            fdb.setLandmarkType(Landmark.NOSE_BASE)
+                    .setMinFaceSize((float) 0.05)
+                    .setTrackingEnabled(false);
+            com.google.android.gms.vision.face.FaceDetector fd = fdb.build();
+            SparseArray<Face> faces = fd.detect(frame);
+
+*/
             bmpFaces = bmp.copy(Bitmap.Config.RGB_565, true);
             MAX_FACES = maxFaces;
             faces = new FaceDetector.Face[MAX_FACES];
