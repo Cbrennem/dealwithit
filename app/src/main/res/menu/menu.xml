@@ -22,13 +22,5 @@
         android:icon="@drawable/ic_text_fields_black_24dp"
         android:title="Edit Text"
         app:showAsAction="always"/>
-    <item
-        android:id="@+id/btnEdit"
-        android:icon="@drawable/ic_edit_black_24dp"
-        android:title="Edit"
-        app:showAsAction="always"/>
-    <item
-        android:icon="@drawable/ic_edit_black_24dp"
-        android:title="Edit"/>
 
 </menu>

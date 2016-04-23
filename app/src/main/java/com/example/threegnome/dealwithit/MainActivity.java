@@ -13,6 +13,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
@@ -20,7 +21,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.media.ExifInterface;
-import android.media.FaceDetector;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -49,7 +49,7 @@ import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.face.*;
 // import com.google.android.gms.vision.face.FaceDetector;
 
-public class MainActivity extends AppCompatActivity  {
+public class MainActivity extends AppCompatActivity {
 
 
     //Option data
@@ -67,7 +67,6 @@ public class MainActivity extends AppCompatActivity  {
     //Intent Codes
     private static final int REQUEST_IMAGE_OPEN = 1;
     private static final int REQUEST_AUDIO_OPEN = 2;
-
 
 
     ImageView imgviewPhoto;
@@ -145,8 +144,7 @@ public class MainActivity extends AppCompatActivity  {
     }
 
 
-    public void onClickChoosePhoto()
-    {
+    public void onClickChoosePhoto() {
 
         Intent test = new Intent();
         test.setAction(Intent.ACTION_PICK);
@@ -192,7 +190,7 @@ public class MainActivity extends AppCompatActivity  {
 
     public void doSelectMusic(int which) {
 
-        if( which != 2 ) {
+        if (which != 2) {
 
             AssetFileDescriptor afd = null;
 
@@ -215,21 +213,18 @@ public class MainActivity extends AppCompatActivity  {
             }
         }
 
-        if (which == 2 ) {
+        if (which == 2) {
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
-            startActivityForResult(intent,REQUEST_AUDIO_OPEN);
+            startActivityForResult(intent, REQUEST_AUDIO_OPEN);
 
             MUSIC_CHOICE_OPTION = 2;
         }
 
 
-
-
     }
 
     @Override
-    protected void onActivityResult (int requestCode, int resultCode, Intent data)
-    {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         if (requestCode == REQUEST_AUDIO_OPEN && resultCode == RESULT_OK) {
 
@@ -244,6 +239,8 @@ public class MainActivity extends AppCompatActivity  {
             }
         }
 
+        // Get the picture and put in on the screen then detect faces and prepare glasses
+        //for animation
         if (requestCode == REQUEST_IMAGE_OPEN && resultCode == RESULT_OK) {
 
             Uri photoUri = data.getData();
@@ -256,7 +253,7 @@ public class MainActivity extends AppCompatActivity  {
                 ExifInterface exif = new ExifInterface(getRealPathFromURI(photoUri));
                 String exifRotation = exif.getAttribute(ExifInterface.TAG_ORIENTATION);
 
-                fd = getContentResolver().openFileDescriptor(photoUri,"r").getFileDescriptor();
+                fd = getContentResolver().openFileDescriptor(photoUri, "r").getFileDescriptor();
 
                 //Get a bitmap that is scaled down based on the size of the picturelayout
                 bmpPhoto = decodeSampledBitmapFromStream(fd, findViewById(R.id.pictureLayout).getWidth(),
@@ -285,14 +282,14 @@ public class MainActivity extends AppCompatActivity  {
         txtView.setInputType(InputType.TYPE_CLASS_TEXT);
         txtView.selectAll();
 
-        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.showSoftInput(txtView,InputMethodManager.SHOW_IMPLICIT);
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.showSoftInput(txtView, InputMethodManager.SHOW_IMPLICIT);
 
         txtView.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
 
-                if((event.getAction() == KeyEvent.ACTION_DOWN) &&
+                if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
                         (keyCode == KeyEvent.KEYCODE_ENTER)) {
 
                     txtView.setInputType(InputType.TYPE_NULL);
@@ -313,12 +310,11 @@ public class MainActivity extends AppCompatActivity  {
     }
 
     //remove from list of glasses and remove from the screen
-    public void removeGlassesfromList()
-    {
-        if( !listImgviewGlasses.isEmpty() ) {
+    public void removeGlassesfromList() {
+        if (!listImgviewGlasses.isEmpty()) {
             ImageView I;
 
-            while( listImgviewGlasses.size() != 0 ) {
+            while (listImgviewGlasses.size() != 0) {
                 I = listImgviewGlasses.get(0);
                 ((ViewGroup) I.getParent()).removeView(I);
                 listImgviewGlasses.remove(0);
@@ -327,39 +323,98 @@ public class MainActivity extends AppCompatActivity  {
     }
 
 
-    public void detectFacesAndPrepareGlasses()
-    {
+    public void detectFacesAndPrepareGlasses() {
 
         if (bmpPhoto != null) {
 
-            faceDetect fd = new faceDetect(bmpPhoto, 10);
+            Frame.Builder frameBuilder = new Frame.Builder();
+            frameBuilder.setBitmap(bmpPhoto);
+            Frame frame = frameBuilder.build();
 
-            drawGlassesAtLocation(fd); // fd.getFacePoints(), fd.getEyeDistance());
+            FaceDetector.Builder fdb =
+                    new FaceDetector.Builder(this);
+            fdb.setLandmarkType(FaceDetector.ALL_LANDMARKS)
+                    .setMinFaceSize((float) 0.05)
+                    .setTrackingEnabled(false);
+            FaceDetector faceDetector = fdb.build();
+            SparseArray<Face> facesList = faceDetector.detect(frame);
 
-        }
-    }
 
-
-
-    public void onClickDetectFaces(View v)
-    {
-        if( bmpPhoto != null) {
-
-            faceDetect fd = new faceDetect(bmpPhoto, 10);
-
-            drawGlassesAtLocation(fd); // fd.getFacePoints(), fd.getEyeDistance());
+            drawGlassesAtLocation(facesList);
 
         }
     }
 
+    //Return Point Array of Midpoint of all faces detected
+    //Returns null if no faces detected
+    public PointF[] getPointBetweenEyes(SparseArray<Face> facesList) {
 
-    public void drawGlassesAtLocation(faceDetect faceInfo) //PointF[] P, float[] eyeCenterPoints)
+        if (facesList.size() != 0) {
+
+            PointF P[] = new PointF[facesList.size()];
+
+            for (int i = 0; i < facesList.size(); i++) {
+
+                // Left Eye is the Photos Left Eye, not your left
+                PointF leftEye = new PointF(1, 1);
+                PointF rightEye = new PointF(0, 0);
+
+                for (Landmark landmark : facesList.valueAt(i).getLandmarks()) {
+
+                    if (landmark.getType() == Landmark.LEFT_EYE) {
+                        leftEye = landmark.getPosition();
+                    } else if (landmark.getType() == Landmark.RIGHT_EYE) {
+                        rightEye = landmark.getPosition();
+                    }
+                }
+
+                float x = rightEye.x + ((leftEye.x - rightEye.x) / 2);
+                float y = rightEye.y + ((leftEye.y - rightEye.y) / 2);
+                P[i] = new PointF(x, y);
+
+            }
+
+            return P;
+        }
+
+        return null;
+    }
+
+
+    public float[] getEyeDistance(SparseArray<Face> facesList) {
+        if (facesList.size() != 0) {
+            float f[] = new float[facesList.size()];
+
+            for (int i = 0; i < facesList.size(); i++) {
+
+                float leftEye = 0;
+                float rightEye = 0;
+
+                for (Landmark landmark : facesList.valueAt(i).getLandmarks()) {
+
+                    if (landmark.getType() == Landmark.LEFT_EYE) {
+                        leftEye = landmark.getPosition().x;
+                    } else if (landmark.getType() == Landmark.RIGHT_EYE) {
+                        rightEye = landmark.getPosition().x;
+                    }
+                }
+
+                f[i] = leftEye - rightEye;
+            }
+
+            return f;
+        }
+
+        return null;
+    }
+
+
+    public void drawGlassesAtLocation(SparseArray<Face> facesList) //PointF[] P, float[] eyeCenterPoints)
     {
-        PointF[] eyeCenterPoints = faceInfo.getFacePoints();
-        float[] eyeDistanceLength = faceInfo.getEyeDistance();
+        PointF[] eyeCenterPoints = getPointBetweenEyes(facesList);
+        float[] eyeDistanceLength = getEyeDistance(facesList);
 
-        if (eyeCenterPoints != null )
-        {
+        if (eyeCenterPoints != null) {
 
             RelativeLayout pictureLayout = (RelativeLayout) findViewById(R.id.pictureLayout);
             ImageView g1;
@@ -381,7 +436,7 @@ public class MainActivity extends AppCompatActivity  {
                 Matrix m = new Matrix();
 
                 //Scale the glasses image to the size using the ratio between the eyes
-                float scaledGlasses = (eyeDistanceLength[i]/GLASSES_PIXEL_EYE_DISTANCE_LENGTH)*imageMatrix[Matrix.MSCALE_X];
+                float scaledGlasses = (eyeDistanceLength[i] / GLASSES_PIXEL_EYE_DISTANCE_LENGTH) * imageMatrix[Matrix.MSCALE_X];
                 m.setScale(scaledGlasses, scaledGlasses);
                 g1.setImageMatrix(m);
                 g1.setScaleType(ImageView.ScaleType.MATRIX);
@@ -409,23 +464,20 @@ public class MainActivity extends AppCompatActivity  {
         }
     }
 
-    public String getRealPathFromURI(Uri uri)
-    {
+    public String getRealPathFromURI(Uri uri) {
         try {
             String[] proj = {MediaStore.Images.Media.DATA};
-            Cursor cursor = getContentResolver().query(uri,proj,null,null,null);
+            Cursor cursor = getContentResolver().query(uri, proj, null, null, null);
             int colIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
             cursor.moveToFirst();
             return cursor.getString(colIndex);
-            }
-            catch (Exception e) {
-                return uri.getPath();
-            }
+        } catch (Exception e) {
+            return uri.getPath();
+        }
     }
 
 
-    private Bitmap rotateBmpUsingExif(Bitmap origBmp, String exifRotation)
-    {
+    private Bitmap rotateBmpUsingExif(Bitmap origBmp, String exifRotation) {
 
         if (exifRotation != null) {
             Matrix m = new Matrix();
@@ -447,8 +499,7 @@ public class MainActivity extends AppCompatActivity  {
         return origBmp;
     }
 
-    public static Bitmap decodeSampledBitmapFromStream(FileDescriptor res, int reqWidth, int reqHeight)
-    {
+    public static Bitmap decodeSampledBitmapFromStream(FileDescriptor res, int reqWidth, int reqHeight) {
         // First decode with inJustDecodeBounds=true to check dimensions
         final BitmapFactory.Options options = new BitmapFactory.Options();
 
@@ -465,8 +516,7 @@ public class MainActivity extends AppCompatActivity  {
         return BitmapFactory.decodeFileDescriptor(res, null, options);
     }
 
-    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight)
-    {
+    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
         // Raw height and width of image
         final int height = options.outHeight;
         final int width = options.outWidth;
@@ -486,8 +536,7 @@ public class MainActivity extends AppCompatActivity  {
     }
 
 
-    private void updateImgviewPhoto(Drawable d1, Drawable d2)
-    {
+    private void updateImgviewPhoto(Drawable d1, Drawable d2) {
         Drawable[] ds = {d1, d2};
 
         lyrdrwPhoto = new LayerDrawable(ds);
@@ -501,8 +550,7 @@ public class MainActivity extends AppCompatActivity  {
 
     }
 
-    public void onAnimate()
-    {
+    public void onAnimate() {
         RelativeLayout pictureLayout = (RelativeLayout) findViewById(R.id.pictureLayout);
 
         EditText t = (EditText) findViewById(R.id.txtDealWithIt);
@@ -510,9 +558,8 @@ public class MainActivity extends AppCompatActivity  {
         flashBackground();
         mediaPlayerParty.start();
 
-        if(!listImgviewGlasses.isEmpty())
-        {
-            for(int i = 0; i < listImgviewGlasses.size(); i++ ) {
+        if (!listImgviewGlasses.isEmpty()) {
+            for (int i = 0; i < listImgviewGlasses.size(); i++) {
                 ImageView glasses = listImgviewGlasses.get(i);
 
                 float startPos = glasses.getTranslationY() - pictureLayout.getHeight();
@@ -529,125 +576,10 @@ public class MainActivity extends AppCompatActivity  {
 
     }
 
-    public void flashBackground()
-    {
+    public void flashBackground() {
         LinearLayout mainLayout = (LinearLayout) findViewById(R.id.mainLayout);
         mainLayout.setBackgroundResource(R.drawable.flashcolor);
-        AnimationDrawable anim = (AnimationDrawable)mainLayout.getBackground();
+        AnimationDrawable anim = (AnimationDrawable) mainLayout.getBackground();
         anim.start();
     }
-
-
-
 }
-
-class faceDetect{
-
-    protected Bitmap bmpFaces;
-    protected int MAX_FACES;
-    protected FaceDetector.Face[] faces;
-    protected int faceCount = 0;
-
-    //Return Point Array of Midpoint of all faces detected
-    //Returns null if no faces detected
-    public PointF[] getFacePoints() {
-
-        if (faceCount != 0) {
-
-            PointF P[] = new PointF[faceCount];
-            PointF tempF = new PointF();
-
-            for (int i = 0; faces[i] != null; i++) {
-
-                faces[i].getMidPoint(tempF);
-                P[i] = new PointF(tempF.x, tempF.y);
-
-            }
-
-            return P;
-        }
-
-        return null;
-    }
-
-    public float[] getEyeDistance()
-    {
-        if (faceCount != 0) {
-
-            float f[] = new float[faceCount];
-
-            for (int i = 0; faces[i] != null; i++) {
-                f[i] = faces[i].eyesDistance();
-            }
-
-            return f;
-        }
-
-        return null;
-
-    }
-
-
-    //Constructor
-    public faceDetect(Bitmap bmp, int maxFaces){
-
-        if (bmp != null)
-        {
-
-            /*
-            Frame.Builder frameBuilder = new Frame.Builder();
-            frameBuilder.setBitmap(bmp);
-            Frame frame = frameBuilder.build();
-
-            com.google.android.gms.vision.face.FaceDetector.Builder fdb =
-                    new com.google.android.gms.vision.face.FaceDetector.Builder(null);
-            fdb.setLandmarkType(Landmark.NOSE_BASE)
-                    .setMinFaceSize((float) 0.05)
-                    .setTrackingEnabled(false);
-            com.google.android.gms.vision.face.FaceDetector fd = fdb.build();
-            SparseArray<Face> faces = fd.detect(frame);
-
-*/
-            bmpFaces = bmp.copy(Bitmap.Config.RGB_565, true);
-            MAX_FACES = maxFaces;
-            faces = new FaceDetector.Face[MAX_FACES];
-            detectFaces();
-        }
-    }
-
-    private void detectFaces() {
-
-        FaceDetector fd = new FaceDetector(bmpFaces.getWidth(), bmpFaces.getHeight(), MAX_FACES);
-        faceCount = fd.findFaces(bmpFaces, faces);
-
-    }
-
-    public BitmapDrawable getBoxFaceOverlay()
-    {
-
-        Bitmap bmpOverlay = Bitmap.createBitmap(bmpFaces.getWidth(),bmpFaces.getHeight(), Bitmap.Config.ARGB_8888);
-
-        Canvas c = new Canvas(bmpOverlay);
-        Paint p = new Paint();
-        p.setStrokeWidth(10);
-        p.setStyle(Paint.Style.STROKE);
-
-        for( int i =0; faces[i] != null; i++)
-        {
-
-            PointF pf = new PointF();
-            faces[i].getMidPoint(pf);
-
-
-
-            c.drawRect(pf.x - (faces[i].eyesDistance()), pf.y - faces[i].eyesDistance()/2,
-                    pf.x + (faces[i].eyesDistance()), pf.y + faces[i].eyesDistance()/2, p);
-
-
-        }
-
-        return new BitmapDrawable( Resources.getSystem() ,bmpOverlay);
-    }
-
-}
-
