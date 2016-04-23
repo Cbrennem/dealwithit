@@ -1,5 +1,6 @@
 package com.example.threegnome.dealwithit;
 
+import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.app.DialogFragment;
 import android.content.Context;
@@ -26,6 +27,7 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.view.menu.ActionMenuItemView;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.util.Log;
@@ -107,8 +109,15 @@ public class MainActivity extends AppCompatActivity {
 
         //Code relating to bottom toolbar
 
+        Point P = new Point(0,0);
+        getWindowManager().getDefaultDisplay().getSize(P);
+
         Toolbar btmToolbar = (Toolbar) findViewById(R.id.btmToolbar);
         btmToolbar.inflateMenu(R.menu.menu);
+        btmToolbar.setPadding(0
+                ,0
+                ,P.x/5 + P.x/40
+                ,0);
 
         btmToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
             @Override
@@ -140,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
         lyrdrwPhoto = new LayerDrawable(layers);
         listImgviewGlasses = new ArrayList<>();
         mediaPlayerParty = MediaPlayer.create(this, R.raw.wholikestoparty);
-
+        mediaPlayerParty.setLooping(true);
     }
 
 
@@ -417,31 +426,36 @@ public class MainActivity extends AppCompatActivity {
         if (eyeCenterPoints != null) {
 
             RelativeLayout pictureLayout = (RelativeLayout) findViewById(R.id.pictureLayout);
-            ImageView g1;
-
-//             debugging
-//            Bitmap b = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888);
-//            b.eraseColor(Color.GREEN);
+            ImageView imgviewGlasses;
 
             for (int i = 0; i < eyeCenterPoints.length; i++) {
 
-                float[] imageMatrix = new float[9];
-                imgviewPhoto.getImageMatrix().getValues(imageMatrix);
 
-                g1 = new ImageView(this);
+                float[] imgviewPhotoMatrix = new float[9];
+                imgviewPhoto.getImageMatrix().getValues(imgviewPhotoMatrix);
+
+                imgviewGlasses = new ImageView(this);
 
                 //I had to move the drawable into the drawable-nodpi so I can do scaling on my own... see density
-                g1.setImageResource(R.drawable.dealwithitglasses);
+                imgviewGlasses.setImageResource(R.drawable.dealwithitglasses);
 
                 Matrix m = new Matrix();
 
                 //Scale the glasses image to the size using the ratio between the eyes
-                float scaledGlasses = (eyeDistanceLength[i] / GLASSES_PIXEL_EYE_DISTANCE_LENGTH) * imageMatrix[Matrix.MSCALE_X];
+                //This is used to scale the glasses to the size of the actual face
+                //Makes the glasses smaller or bigger depending on this number
+                float scaledGlasses = (eyeDistanceLength[i] / GLASSES_PIXEL_EYE_DISTANCE_LENGTH)
+                        * imgviewPhotoMatrix[Matrix.MSCALE_X];
                 m.setScale(scaledGlasses, scaledGlasses);
-                g1.setImageMatrix(m);
-                g1.setScaleType(ImageView.ScaleType.MATRIX);
 
-                pictureLayout.addView(g1);
+
+
+                imgviewGlasses.setImageMatrix(m);
+                imgviewGlasses.setScaleType(ImageView.ScaleType.MATRIX);
+
+                imgviewGlasses.setScaleY(imgviewGlasses.getScaleY() * -1.0f);
+
+                pictureLayout.addView(imgviewGlasses);
 
                 // The position of the glasses
                 // We must get the scaled image in the Imageview and the Left and Top position of
@@ -449,17 +463,21 @@ public class MainActivity extends AppCompatActivity {
                 //Scale the position with the image in the imageView and then the top position of
                 // the image will be the empty space from the imageview to the image.
 
-                //Draw the glasses facting in the locaiton of the image and its scale and center the glasses at the center of the eyes.
-
-                g1.setTranslationX((eyeCenterPoints[i].x * imageMatrix[Matrix.MSCALE_X] + imageMatrix[Matrix.MTRANS_X])
+                //Draw the glasses facting in the locaiton of the image and its scale and center the
+                // glasses at the center of the eyes.
+                imgviewGlasses.setTranslationX(
+                        (eyeCenterPoints[i].x * imgviewPhotoMatrix[Matrix.MSCALE_X]
+                        + imgviewPhotoMatrix[Matrix.MTRANS_X])
                         - (GLASSES_PIXEL_CENTER_X * scaledGlasses));
 
-                g1.setTranslationY((eyeCenterPoints[i].y * imageMatrix[Matrix.MSCALE_Y] + imageMatrix[Matrix.MTRANS_Y])
+                imgviewGlasses.setTranslationY(
+                        (eyeCenterPoints[i].y * imgviewPhotoMatrix[Matrix.MSCALE_Y]
+                        + imgviewPhotoMatrix[Matrix.MTRANS_Y])
                         - (GLASSES_PIXEL_CENTER_Y * scaledGlasses));
 
-                g1.setVisibility(ImageView.INVISIBLE);
+                imgviewGlasses.setVisibility(ImageView.INVISIBLE);
 
-                listImgviewGlasses.add(g1);
+                listImgviewGlasses.add(imgviewGlasses);
             }
         }
     }
@@ -568,6 +586,34 @@ public class MainActivity extends AppCompatActivity {
                 glasses.setVisibility(ImageView.VISIBLE);
                 ObjectAnimator glassesAnimator = ObjectAnimator.ofFloat(glasses, "TranslationY", startPos, endPos);
                 glassesAnimator.setDuration(4000);
+
+                glassesAnimator.addListener(new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(Animator animation) {
+                        ActionMenuItemView btn = (ActionMenuItemView) findViewById(R.id.btnAnimate);
+                        btn.setEnabled(false);
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        ActionMenuItemView btn = (ActionMenuItemView) findViewById(R.id.btnAnimate);
+                        btn.setEnabled(true);
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+
+                        ActionMenuItemView btn = (ActionMenuItemView) findViewById(R.id.btnAnimate);
+                        btn.setEnabled(true);
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animator animation) {
+
+                    }
+                });
+
+
                 glassesAnimator.start();
 
 
