@@ -3,6 +3,8 @@ package com.example.threegnome.dealwithit;
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.app.DialogFragment;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
@@ -24,6 +26,7 @@ import android.graphics.drawable.LayerDrawable;
 import android.media.ExifInterface;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -34,6 +37,7 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.view.KeyEvent;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,7 +46,10 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+
+import java.io.File;
 import java.io.FileDescriptor;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -95,8 +102,72 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
-        return true;
+        MenuInflater inflater=getMenuInflater();
+        inflater.inflate(R.menu.topmenu,menu);
+
+        return super.onCreateOptionsMenu(menu);
     }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+            case R.id.btnGif:
+                saveImage();
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    public void saveImage() {
+
+        if (bmpPhoto != null) {
+
+
+            File path;
+            String appDirectoryName = "Dealwithit";
+
+            //Check if there is external storage
+            if( Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+                //Create a directory for this app.  This uses the public PICTURES folder and
+                //creates it there
+                path = new File(
+                        Environment.getExternalStoragePublicDirectory(
+                                Environment.DIRECTORY_PICTURES).getAbsolutePath()
+                        + File.separator + appDirectoryName );
+                path.mkdir();
+            } else {
+                path = Environment.getDataDirectory();
+            }
+
+            try {
+                //Write to File at the path specified
+                FileOutputStream out = new FileOutputStream(path.getAbsoluteFile() +
+                        File.separator + "test.jpeg");
+                //Write a bitmap to the output
+                bmpPhoto.compress(Bitmap.CompressFormat.JPEG,100,out );
+                out.flush();
+                out.close();
+            } catch (Exception e ) {
+                e.printStackTrace();
+            }
+
+            //This adds the metadata so that the Gallery will be populated with the new Pictures
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.TITLE, "test");
+            values.put(MediaStore.Images.Media.DESCRIPTION, "test");
+            values.put(MediaStore.Images.ImageColumns.BUCKET_ID, "test.jpeg");
+            values.put(MediaStore.Images.ImageColumns.BUCKET_DISPLAY_NAME, "test.jpeg");
+            values.put("_data", path.getAbsolutePath() + File.separator + "test.jpeg");
+
+            ContentResolver cr = getContentResolver();
+            cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values);
+
+        }
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -452,8 +523,6 @@ public class MainActivity extends AppCompatActivity {
 
                 imgviewGlasses.setImageMatrix(m);
                 imgviewGlasses.setScaleType(ImageView.ScaleType.MATRIX);
-
-                imgviewGlasses.setScaleY(imgviewGlasses.getScaleY() * -1.0f);
 
                 pictureLayout.addView(imgviewGlasses);
 
