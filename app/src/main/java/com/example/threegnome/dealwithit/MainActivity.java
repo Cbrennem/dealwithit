@@ -147,7 +147,9 @@ public class MainActivity extends AppCompatActivity {
                 FileOutputStream out = new FileOutputStream(path.getAbsoluteFile() +
                         File.separator + "test.jpeg");
                 //Write a bitmap to the output
-                bmpPhoto.compress(Bitmap.CompressFormat.JPEG,100,out );
+                RelativeLayout pictureLayout = (RelativeLayout) findViewById(R.id.pictureLayout);
+                
+                (pictureLayout.getDrawingCache()).compress(Bitmap.CompressFormat.JPEG,100,out );
                 out.flush();
                 out.close();
             } catch (Exception e ) {
@@ -174,6 +176,10 @@ public class MainActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+        RelativeLayout pictureLayout = (RelativeLayout) findViewById(R.id.pictureLayout);
+        pictureLayout.setDrawingCacheEnabled(true);
 
         Toolbar topToolbar = (Toolbar) findViewById(R.id.topToolbar);
         setSupportActionBar(topToolbar);
@@ -427,80 +433,71 @@ public class MainActivity extends AppCompatActivity {
 
     //Return Point Array of Midpoint of all faces detected
     //Returns null if no faces detected
-    public PointF[] getPointBetweenEyes(SparseArray<Face> facesList) {
+    public PointF getPointBetweenEyes(Face face) {
 
-        if (facesList.size() != 0) {
+        if (face != null) {
 
-            PointF P[] = new PointF[facesList.size()];
+            PointF P = new PointF();
 
-            for (int i = 0; i < facesList.size(); i++) {
+            // Left Eye is the Photos Left Eye, not your left
+            PointF leftEye = new PointF(1, 1);
+            PointF rightEye = new PointF(0, 0);
 
-                // Left Eye is the Photos Left Eye, not your left
-                PointF leftEye = new PointF(1, 1);
-                PointF rightEye = new PointF(0, 0);
+            for (Landmark landmark : face.getLandmarks()) {
 
-                for (Landmark landmark : facesList.valueAt(i).getLandmarks()) {
-
-                    if (landmark.getType() == Landmark.LEFT_EYE) {
-                        leftEye = landmark.getPosition();
-                    } else if (landmark.getType() == Landmark.RIGHT_EYE) {
-                        rightEye = landmark.getPosition();
-                    }
+                if (landmark.getType() == Landmark.LEFT_EYE) {
+                    leftEye = landmark.getPosition();
+                } else if (landmark.getType() == Landmark.RIGHT_EYE) {
+                    rightEye = landmark.getPosition();
                 }
-
-                float x = rightEye.x + ((leftEye.x - rightEye.x) / 2);
-                float y = rightEye.y + ((leftEye.y - rightEye.y) / 2);
-                P[i] = new PointF(x, y);
-
             }
 
-            return P;
+            float x = rightEye.x + ((leftEye.x - rightEye.x) / 2);
+            float y = rightEye.y + ((leftEye.y - rightEye.y) / 2);
+
+
+            return (new PointF(x, y));
         }
 
         return null;
     }
 
+    public float getEyeDistance(Face face) {
 
-    public float[] getEyeDistance(SparseArray<Face> facesList) {
-        if (facesList.size() != 0) {
-            float f[] = new float[facesList.size()];
+        if( face != null ) {
 
-            for (int i = 0; i < facesList.size(); i++) {
+            float leftEye = 0;
+            float rightEye = 0;
 
-                float leftEye = 0;
-                float rightEye = 0;
+            for (Landmark landmark : face.getLandmarks()) {
 
-                for (Landmark landmark : facesList.valueAt(i).getLandmarks()) {
-
-                    if (landmark.getType() == Landmark.LEFT_EYE) {
-                        leftEye = landmark.getPosition().x;
-                    } else if (landmark.getType() == Landmark.RIGHT_EYE) {
-                        rightEye = landmark.getPosition().x;
-                    }
+                if (landmark.getType() == Landmark.LEFT_EYE) {
+                    leftEye = landmark.getPosition().x;
+                } else if (landmark.getType() == Landmark.RIGHT_EYE) {
+                    rightEye = landmark.getPosition().x;
                 }
-
-                f[i] = leftEye - rightEye;
             }
 
-            return f;
+            return leftEye - rightEye;
         }
 
-        return null;
+        return 0;
     }
 
 
     public void drawGlassesAtLocation(SparseArray<Face> facesList) //PointF[] P, float[] eyeCenterPoints)
     {
-        PointF[] eyeCenterPoints = getPointBetweenEyes(facesList);
-        float[] eyeDistanceLength = getEyeDistance(facesList);
 
-        if (eyeCenterPoints != null) {
+        RelativeLayout pictureLayout = (RelativeLayout) findViewById(R.id.pictureLayout);
+        ImageView imgviewGlasses;
 
-            RelativeLayout pictureLayout = (RelativeLayout) findViewById(R.id.pictureLayout);
-            ImageView imgviewGlasses;
+        for (int i = 0; i != facesList.size(); i++) {
 
-            for (int i = 0; i < eyeCenterPoints.length; i++) {
+            PointF eyeCenterPoint = getPointBetweenEyes(facesList.get(i));
 
+            if (eyeCenterPoint != null) {
+
+                float eyeDistanceLength = getEyeDistance(facesList.get(i));
 
                 float[] imgviewPhotoMatrix = new float[9];
                 imgviewPhoto.getImageMatrix().getValues(imgviewPhotoMatrix);
@@ -515,10 +512,9 @@ public class MainActivity extends AppCompatActivity {
                 //Scale the glasses image to the size using the ratio between the eyes
                 //This is used to scale the glasses to the size of the actual face
                 //Makes the glasses smaller or bigger depending on this number
-                float scaledGlasses = (eyeDistanceLength[i] / GLASSES_PIXEL_EYE_DISTANCE_LENGTH)
+                float scaledGlasses = (eyeDistanceLength / GLASSES_PIXEL_EYE_DISTANCE_LENGTH)
                         * imgviewPhotoMatrix[Matrix.MSCALE_X];
                 m.setScale(scaledGlasses, scaledGlasses);
-
 
 
                 imgviewGlasses.setImageMatrix(m);
@@ -535,14 +531,14 @@ public class MainActivity extends AppCompatActivity {
                 //Draw the glasses facting in the locaiton of the image and its scale and center the
                 // glasses at the center of the eyes.
                 imgviewGlasses.setTranslationX(
-                        (eyeCenterPoints[i].x * imgviewPhotoMatrix[Matrix.MSCALE_X]
-                        + imgviewPhotoMatrix[Matrix.MTRANS_X])
-                        - (GLASSES_PIXEL_CENTER_X * scaledGlasses));
+                        (eyeCenterPoint.x * imgviewPhotoMatrix[Matrix.MSCALE_X]
+                                + imgviewPhotoMatrix[Matrix.MTRANS_X])
+                                - (GLASSES_PIXEL_CENTER_X * scaledGlasses));
 
                 imgviewGlasses.setTranslationY(
-                        (eyeCenterPoints[i].y * imgviewPhotoMatrix[Matrix.MSCALE_Y]
-                        + imgviewPhotoMatrix[Matrix.MTRANS_Y])
-                        - (GLASSES_PIXEL_CENTER_Y * scaledGlasses));
+                        (eyeCenterPoint.y * imgviewPhotoMatrix[Matrix.MSCALE_Y]
+                                + imgviewPhotoMatrix[Matrix.MTRANS_Y])
+                                - (GLASSES_PIXEL_CENTER_Y * scaledGlasses));
 
                 imgviewGlasses.setVisibility(ImageView.INVISIBLE);
 
