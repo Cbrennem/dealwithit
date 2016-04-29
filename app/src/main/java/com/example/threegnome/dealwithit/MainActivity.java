@@ -3,26 +3,17 @@ package com.example.threegnome.dealwithit;
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.app.DialogFragment;
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
 import android.media.ExifInterface;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -46,6 +37,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -56,10 +48,8 @@ import java.util.List;
 
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.face.*;
-// import com.google.android.gms.vision.face.FaceDetector;
 
 public class MainActivity extends AppCompatActivity {
-
 
     //Option data
     int MUSIC_CHOICE_OPTION = 0;
@@ -76,13 +66,11 @@ public class MainActivity extends AppCompatActivity {
     //Intent Codes
     private static final int REQUEST_IMAGE_OPEN = 1;
     private static final int REQUEST_AUDIO_OPEN = 2;
+    private static final int REQUEST_TAKE_A_PICTURE = 3;
 
 
     ImageView imgviewPhoto;
-    Bitmap bmpPhoto;
-    LayerDrawable lyrdrwPhoto;
     MediaPlayer mediaPlayerParty;
-
     List<ImageView> listImgviewGlasses;
 
     @Override
@@ -115,6 +103,9 @@ public class MainActivity extends AppCompatActivity {
             case R.id.btnGif:
                 saveImage();
                 return true;
+            case R.id.btnTakeAPic:
+                onTakeaPicture();
+                return true;
 
             default:
                 return super.onOptionsItemSelected(item);
@@ -123,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void saveImage() {
 
-        if (bmpPhoto != null) {
+        if (imgviewPhoto.getDrawable() != null) {
 
 
             File path;
@@ -143,29 +134,34 @@ public class MainActivity extends AppCompatActivity {
             }
 
             try {
-                //Write to File at the path specified
-                FileOutputStream out = new FileOutputStream(path.getAbsoluteFile() +
-                        File.separator + "test.jpeg");
-                //Write a bitmap to the output
+
+                String filename = File.separator + "dwi" + System.currentTimeMillis() +  ".jpeg";
+
+                //Write a new File at the path specified
+                FileOutputStream out = new FileOutputStream(path.getAbsolutePath() + filename);
+
+                //draw the combined layouts of the photo and the glasses
                 RelativeLayout pictureLayout = (RelativeLayout) findViewById(R.id.pictureLayout);
-                
+                pictureLayout.setDrawingCacheEnabled(true);
+
                 (pictureLayout.getDrawingCache()).compress(Bitmap.CompressFormat.JPEG,100,out );
-                out.flush();
+
+                pictureLayout.destroyDrawingCache();
+
                 out.close();
+
+                //To update the gallery
+                sendBroadcast(
+                        new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,
+                                Uri.parse( "file://" + path.getAbsolutePath() + filename ))
+
+                );
+
+                Toast.makeText(this, "Picture Saved", Toast.LENGTH_SHORT).show();
+
             } catch (Exception e ) {
                 e.printStackTrace();
             }
-
-            //This adds the metadata so that the Gallery will be populated with the new Pictures
-            ContentValues values = new ContentValues();
-            values.put(MediaStore.Images.Media.TITLE, "test");
-            values.put(MediaStore.Images.Media.DESCRIPTION, "test");
-            values.put(MediaStore.Images.ImageColumns.BUCKET_ID, "test.jpeg");
-            values.put(MediaStore.Images.ImageColumns.BUCKET_DISPLAY_NAME, "test.jpeg");
-            values.put("_data", path.getAbsolutePath() + File.separator + "test.jpeg");
-
-            ContentResolver cr = getContentResolver();
-            cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values);
 
         }
     }
@@ -177,9 +173,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-        RelativeLayout pictureLayout = (RelativeLayout) findViewById(R.id.pictureLayout);
-        pictureLayout.setDrawingCacheEnabled(true);
 
         Toolbar topToolbar = (Toolbar) findViewById(R.id.topToolbar);
         setSupportActionBar(topToolbar);
@@ -222,34 +215,43 @@ public class MainActivity extends AppCompatActivity {
         imgviewPhoto = (ImageView) findViewById(R.id.photoView);
 
         //used to draw a second layer over the image if needed
-        Drawable[] layers = {new ColorDrawable(Color.TRANSPARENT), new ColorDrawable(Color.TRANSPARENT)};
-        lyrdrwPhoto = new LayerDrawable(layers);
         listImgviewGlasses = new ArrayList<>();
+
         mediaPlayerParty = MediaPlayer.create(this, R.raw.wholikestoparty);
         mediaPlayerParty.setLooping(true);
+
     }
 
 
-    public void onClickChoosePhoto() {
+    public void onTakeaPicture() {
 
-        Intent test = new Intent();
-        test.setAction(Intent.ACTION_PICK);
-        test.setType("image/*");
 
-        if (test.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(test, REQUEST_IMAGE_OPEN);
+        Intent takepic = new Intent();
+        takepic.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        if (takepic.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(takepic, REQUEST_IMAGE_OPEN);
         }
 
 
-        removeGlassesfromList();
+    }
+
+    public void onClickChoosePhoto() {
+
 
         resetHomeScreen();
 
+        Intent intentChoosePicture = new Intent();
+        intentChoosePicture.setAction(Intent.ACTION_PICK);
+        intentChoosePicture.setType("image/*");
+
+        if (intentChoosePicture.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(intentChoosePicture, REQUEST_IMAGE_OPEN);
+        }
 
     }
 
     public void resetHomeScreen() {
-
 
         mediaPlayerParty.stop();
 
@@ -261,8 +263,9 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        ((EditText) findViewById(R.id.txtDealWithIt)).setVisibility(View.INVISIBLE);
-        ((LinearLayout) findViewById(R.id.mainLayout)).setBackgroundResource(R.color.background);
+        findViewById(R.id.txtDealWithIt).setVisibility(View.INVISIBLE);
+        findViewById(R.id.mainLayout).setBackgroundResource(R.color.background);
+
     }
 
     public void onChangeMusic() {
@@ -327,13 +330,16 @@ public class MainActivity extends AppCompatActivity {
 
         // Get the picture and put in on the screen then detect faces and prepare glasses
         //for animation
-        if (requestCode == REQUEST_IMAGE_OPEN && resultCode == RESULT_OK) {
+        if (( requestCode == REQUEST_IMAGE_OPEN || requestCode == REQUEST_TAKE_A_PICTURE)
+                && resultCode == RESULT_OK) {
 
             Uri photoUri = data.getData();
 
             FileDescriptor fd;
 
             try {
+
+                Bitmap bmp;
 
                 //the exif has tag info on the photo.  Used to get the orientation info of the photo
                 ExifInterface exif = new ExifInterface(getRealPathFromURI(photoUri));
@@ -342,14 +348,13 @@ public class MainActivity extends AppCompatActivity {
                 fd = getContentResolver().openFileDescriptor(photoUri, "r").getFileDescriptor();
 
                 //Get a bitmap that is scaled down based on the size of the picturelayout
-                bmpPhoto = decodeSampledBitmapFromStream(fd, findViewById(R.id.pictureLayout).getWidth(),
+                bmp = decodeSampledBitmapFromStream(fd, findViewById(R.id.pictureLayout).getWidth(),
                         findViewById(R.id.pictureLayout).getHeight());
 
                 //rotate the bmp based on Exifinterface data
-                bmpPhoto = rotateBmpUsingExif(bmpPhoto, exifRotation);
+                bmp = rotateBmpUsingExif(bmp, exifRotation);
 
-                updateImgviewPhoto(new BitmapDrawable(getResources(), bmpPhoto),
-                        new ColorDrawable(Color.TRANSPARENT));
+                imgviewPhoto.setImageDrawable(new BitmapDrawable(getResources(), bmp));
 
                 detectFacesAndPrepareGlasses();
 
@@ -381,6 +386,7 @@ public class MainActivity extends AppCompatActivity {
                     txtView.setInputType(InputType.TYPE_NULL);
                     txtView.clearFocus();
                     txtView.setSelection(0);
+                    txtView.setVisibility(View.INVISIBLE);
                     txtView.setEnabled(false);
 
                     return true;
@@ -390,13 +396,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void onEdit(View view) {
 
-
-    }
 
     //remove from list of glasses and remove from the screen
     public void removeGlassesfromList() {
+
         if (!listImgviewGlasses.isEmpty()) {
             ImageView I;
 
@@ -411,10 +415,14 @@ public class MainActivity extends AppCompatActivity {
 
     public void detectFacesAndPrepareGlasses() {
 
-        if (bmpPhoto != null) {
+        Bitmap bmp = ((BitmapDrawable)imgviewPhoto.getDrawable()).getBitmap();
 
+
+        if (bmp != null) {
             Frame.Builder frameBuilder = new Frame.Builder();
-            frameBuilder.setBitmap(bmpPhoto);
+
+            frameBuilder.setBitmap(bmp);
+
             Frame frame = frameBuilder.build();
 
             FaceDetector.Builder fdb =
@@ -424,6 +432,7 @@ public class MainActivity extends AppCompatActivity {
                     .setTrackingEnabled(false);
             FaceDetector faceDetector = fdb.build();
             SparseArray<Face> facesList = faceDetector.detect(frame);
+            faceDetector.release();
 
 
             drawGlassesAtLocation(facesList);
@@ -487,6 +496,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void drawGlassesAtLocation(SparseArray<Face> facesList) //PointF[] P, float[] eyeCenterPoints)
     {
+        //First remove all the glasses from the list if there are any
+        removeGlassesfromList();
 
         RelativeLayout pictureLayout = (RelativeLayout) findViewById(R.id.pictureLayout);
         ImageView imgviewGlasses;
@@ -618,22 +629,8 @@ public class MainActivity extends AppCompatActivity {
         return inSampleSize;
     }
 
-
-    private void updateImgviewPhoto(Drawable d1, Drawable d2) {
-        Drawable[] ds = {d1, d2};
-
-        lyrdrwPhoto = new LayerDrawable(ds);
-
-        //SetDrawableByLayerID does work properly,  the previous call always draws on top of the layer
-        // or I'm doing something wrong.
-        //lyrdrwPhoto.setDrawableByLayerId(lyrdrwPhoto.getId(0), d1);
-        //lyrdrwPhoto.setDrawableByLayerId(lyrdrwPhoto.getId(1), new ColorDrawable(Color.TRANSPARENT));
-
-        imgviewPhoto.setImageDrawable(lyrdrwPhoto);
-
-    }
-
     public void onAnimate() {
+
         RelativeLayout pictureLayout = (RelativeLayout) findViewById(R.id.pictureLayout);
 
         EditText t = (EditText) findViewById(R.id.txtDealWithIt);
@@ -678,9 +675,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-
                 glassesAnimator.start();
-
 
             }
         }
