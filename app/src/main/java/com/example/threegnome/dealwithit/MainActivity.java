@@ -14,6 +14,7 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
+import android.media.AudioManager;
 import android.media.ExifInterface;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -25,7 +26,6 @@ import android.support.v7.view.menu.ActionMenuItemView;
 import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -73,8 +73,16 @@ public class MainActivity extends AppCompatActivity {
     private ShareActionProvider mShareActionProvider;
 
     ImageView imgviewPhoto;
+    AudioManager mAudioManager;
+    AudioManager.OnAudioFocusChangeListener mAfListener;
     MediaPlayer mediaPlayerParty;
     List<ImageView> listImgviewGlasses;
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mAudioManager.abandonAudioFocus(mAfListener);
+    }
 
     @Override
     protected void onPause() {
@@ -197,12 +205,34 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //Set what the volume keys control
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
+
+        mAudioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
+
+        mAfListener =
+                new AudioManager.OnAudioFocusChangeListener() {
+                    @Override
+                    public void onAudioFocusChange(int focusChange) {
+                        if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+                            mediaPlayerParty.pause();
+                        } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+                            mediaPlayerParty.start();
+                        } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+
+                            mAudioManager.abandonAudioFocus(mAfListener);
+                            // Stop playback
+                        }
+                    }
+                };
+
+
+
 
         Toolbar topToolbar = (Toolbar) findViewById(R.id.topToolbar);
         setSupportActionBar(topToolbar);
 
         //Code relating to bottom toolbar
-
         Point P = new Point(0,0);
         getWindowManager().getDefaultDisplay().getSize(P);
 
@@ -676,7 +706,19 @@ public class MainActivity extends AppCompatActivity {
         EditText t = (EditText) findViewById(R.id.txtDealWithIt);
         t.setVisibility(View.VISIBLE);
         flashBackground();
-        mediaPlayerParty.start();
+
+
+
+
+
+        int result = mAudioManager.requestAudioFocus(mAfListener,
+                AudioManager.STREAM_MUSIC,
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+
+
+        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            mediaPlayerParty.start();
+        }
 
         if (!listImgviewGlasses.isEmpty()) {
             float lowestGlassesYPosition = 0;
