@@ -2,6 +2,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+
+    <item
+        android:id="@+id/btnTakeAPic"
+        android:icon="@drawable/ic_add_a_photo_black_24dp"
+        android:title="Take a photo"
+        app:showAsAction="always" />
     <item
         android:id="@+id/btnPic"
         android:icon="@drawable/ic_portrait_black_24dp"

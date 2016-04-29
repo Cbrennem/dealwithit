@@ -7,16 +7,10 @@
         android:id="@+id/btnShare"
         android:icon="@drawable/ic_share_black_24dp"
         android:title="Share"
-        app:showAsAction="always"
-        app:actionProviderClass="android.support.v7.widget.ShareActionProvider"/>
-    <item
-        android:id="@+id/btnTakeAPic"
-        android:icon="@drawable/ic_add_a_photo_black_24dp"
-        android:title="Take a photo"
         app:showAsAction="always" />
     <item
-        android:id="@+id/btnGif"
-        android:icon="@drawable/ic_file_download_black_24dp"
+        android:id="@+id/btnSavePic"
+        android:icon="@drawable/ic_save_black_24dp"
         android:title="save picture"
         app:showAsAction="always" />
 

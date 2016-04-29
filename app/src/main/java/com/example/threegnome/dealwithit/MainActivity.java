@@ -22,6 +22,7 @@ import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.view.menu.ActionMenuItemView;
+import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.util.Log;
@@ -69,6 +70,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_TAKE_A_PICTURE = 3;
 
 
+    private ShareActionProvider mShareActionProvider;
+
     ImageView imgviewPhoto;
     MediaPlayer mediaPlayerParty;
     List<ImageView> listImgviewGlasses;
@@ -100,11 +103,11 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
 
         switch (item.getItemId()) {
-            case R.id.btnGif:
+            case R.id.btnSavePic:
                 saveImage();
                 return true;
-            case R.id.btnTakeAPic:
-                onTakeaPicture();
+            case R.id.btnShare:
+                onShare();
                 return true;
 
             default:
@@ -112,7 +115,23 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void saveImage() {
+    public void onShare() {
+
+        if (imgviewPhoto.getDrawable() != null) {
+
+            Intent share = new Intent();
+
+            share.setAction(Intent.ACTION_SEND);
+            share.putExtra(Intent.EXTRA_STREAM, Uri.parse(saveImage()));
+            share.setType("image/jpeg");
+
+            startActivity(Intent.createChooser(share, "Share image using..."));
+        }
+
+    }
+
+    //Return the URI of file
+    public String saveImage() {
 
         if (imgviewPhoto.getDrawable() != null) {
 
@@ -159,11 +178,16 @@ public class MainActivity extends AppCompatActivity {
 
                 Toast.makeText(this, "Picture Saved", Toast.LENGTH_SHORT).show();
 
+                return "file://" + path.getAbsolutePath() + filename;
+
             } catch (Exception e ) {
                 e.printStackTrace();
             }
-
         }
+
+        Toast.makeText(this, "No Image to save!", Toast.LENGTH_SHORT).show();
+
+        return null;
     }
 
 
@@ -186,7 +210,7 @@ public class MainActivity extends AppCompatActivity {
         btmToolbar.inflateMenu(R.menu.menu);
         btmToolbar.setPadding(0
                 ,0
-                ,P.x/5 + P.x/40
+                ,P.x/7
                 ,0);
 
         btmToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
@@ -194,6 +218,9 @@ public class MainActivity extends AppCompatActivity {
             public boolean onMenuItemClick(MenuItem item) {
 
                 switch (item.getItemId()) {
+                    case R.id.btnTakeAPic:
+                        onTakeaPicture();
+                        return true;
                     case R.id.btnPic:
                         onClickChoosePhoto();
                         return true;
@@ -437,12 +464,14 @@ public class MainActivity extends AppCompatActivity {
 
             drawGlassesAtLocation(facesList);
 
+
         }
     }
 
     //Return Point Array of Midpoint of all faces detected
     //Returns null if no faces detected
     public PointF getPointBetweenEyes(Face face) {
+
 
         if (face != null) {
 
@@ -496,19 +525,26 @@ public class MainActivity extends AppCompatActivity {
 
     public void drawGlassesAtLocation(SparseArray<Face> facesList) //PointF[] P, float[] eyeCenterPoints)
     {
+
+
         //First remove all the glasses from the list if there are any
         removeGlassesfromList();
 
         RelativeLayout pictureLayout = (RelativeLayout) findViewById(R.id.pictureLayout);
         ImageView imgviewGlasses;
 
+
+
+
         for (int i = 0; i != facesList.size(); i++) {
 
-            PointF eyeCenterPoint = getPointBetweenEyes(facesList.get(i));
+
+            PointF eyeCenterPoint = getPointBetweenEyes(facesList.valueAt(i));
+
 
             if (eyeCenterPoint != null) {
 
-                float eyeDistanceLength = getEyeDistance(facesList.get(i));
+                float eyeDistanceLength = getEyeDistance(facesList.valueAt(i));
 
                 float[] imgviewPhotoMatrix = new float[9];
                 imgviewPhoto.getImageMatrix().getValues(imgviewPhotoMatrix);
@@ -554,6 +590,10 @@ public class MainActivity extends AppCompatActivity {
                 imgviewGlasses.setVisibility(ImageView.INVISIBLE);
 
                 listImgviewGlasses.add(imgviewGlasses);
+
+
+
+
             }
         }
     }
@@ -639,15 +679,25 @@ public class MainActivity extends AppCompatActivity {
         mediaPlayerParty.start();
 
         if (!listImgviewGlasses.isEmpty()) {
+            float lowestGlassesYPosition = 0;
+
+            for (int i = 0; i < listImgviewGlasses.size();i++) {
+                float temp = listImgviewGlasses.get(i).getTranslationY();
+
+                if( temp > lowestGlassesYPosition )
+                    lowestGlassesYPosition = temp;
+
+            }
+
             for (int i = 0; i < listImgviewGlasses.size(); i++) {
                 ImageView glasses = listImgviewGlasses.get(i);
 
-                float startPos = glasses.getTranslationY() - pictureLayout.getHeight();
+                float startPos = glasses.getTranslationY() - lowestGlassesYPosition - glasses.getHeight(); //- pictureLayout.getHeight();
                 float endPos = glasses.getTranslationY();
 
                 glasses.setVisibility(ImageView.VISIBLE);
                 ObjectAnimator glassesAnimator = ObjectAnimator.ofFloat(glasses, "TranslationY", startPos, endPos);
-                glassesAnimator.setDuration(4000);
+                glassesAnimator.setDuration(3000);
 
                 glassesAnimator.addListener(new Animator.AnimatorListener() {
                     @Override
@@ -678,6 +728,8 @@ public class MainActivity extends AppCompatActivity {
                 glassesAnimator.start();
 
             }
+        } else {
+            Toast.makeText(this, "No faces detected!", Toast.LENGTH_SHORT).show();
         }
 
     }
