@@ -3,8 +3,14 @@
 
     <string name="mainText">Deal with it!</string>
 
-    <string name="btn_choosepic">Choose Pictures</string>
-    <string name="btn_dealwithit">Deal with it!</string>
+    <string name="btn_takepic">Take a Picture</string>
+    <string name="btn_choosepic">Choose a Picture</string>
+    <string name="btn_animate">Animate</string>
+    <string name="btn_choosemusic">Choose Pictures</string>
+    <string name="btn_choosetext">Choose Pictures</string>
+
+    <string name="btn_share">Share</string>
+    <string name="btn_save">Save Picture</string>
 
     <string name="choose_music_title">Choose Music</string>
     <string name="music_option_1">Who Likes to Party</string>
@@ -14,5 +20,7 @@
     <string name="credits_Music">pazzmatica Polka Kevin MacLeod (incompetech.com)
     Licensed under Creative Commons: By Attribution 3.0 License
     http://creativecommons.org/licenses/by/3.0/</string>
+
+
 
 </resources>

@@ -37,11 +37,23 @@
             android:text="@string/mainText"
             android:inputType="none"
             android:enabled ="false"
-            android:textColor="@color/darkred"
+            android:textColor="@color/black"
             android:id="@+id/txtDealWithIt"
             android:visibility="invisible"
+            android:shadowColor="@color/white"
+            android:shadowRadius="12"
             android:layout_alignParentBottom="true"
             android:layout_alignParentStart="true"
+            android:layout_alignParentEnd="true" />
+
+        <ToggleButton
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:id="@+id/btnMute"
+            android:textOn=""
+            android:textOff=""
+            android:background="@drawable/ic_togglemute"
+            android:layout_alignParentTop="true"
             android:layout_alignParentEnd="true" />
 
     </RelativeLayout>

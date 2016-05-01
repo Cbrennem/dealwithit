@@ -6,12 +6,12 @@
     <item
         android:id="@+id/btnShare"
         android:icon="@drawable/ic_share_black_24dp"
-        android:title="Share"
+        android:title="@string/btn_share"
         app:showAsAction="always" />
     <item
         android:id="@+id/btnSavePic"
         android:icon="@drawable/ic_save_black_24dp"
-        android:title="save picture"
+        android:title="@string/btn_save"
         app:showAsAction="always" />
 
 </menu>

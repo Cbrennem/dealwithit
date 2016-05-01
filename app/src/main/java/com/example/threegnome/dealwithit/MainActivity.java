@@ -34,11 +34,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -69,9 +71,6 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_AUDIO_OPEN = 2;
     private static final int REQUEST_TAKE_A_PICTURE = 3;
 
-
-    private ShareActionProvider mShareActionProvider;
-
     ImageView imgviewPhoto;
     AudioManager mAudioManager;
     AudioManager.OnAudioFocusChangeListener mAfListener;
@@ -93,8 +92,115 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mediaPlayerParty.setVolume(1, 1);
+
+        ToggleButton btnMute = (ToggleButton) findViewById(R.id.btnMute);
+
+        if( !btnMute.isChecked() )
+            mediaPlayerParty.setVolume(1, 1);
     }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        //Set what the volume keys control
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
+
+        mAudioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
+
+        mAfListener =
+                new AudioManager.OnAudioFocusChangeListener() {
+                    @Override
+                    public void onAudioFocusChange(int focusChange) {
+                        if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+                            mediaPlayerParty.pause();
+                        } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+                            mediaPlayerParty.start();
+                        } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+
+                            mAudioManager.abandonAudioFocus(mAfListener);
+                            // Stop playback
+                        }
+                    }
+                };
+
+
+
+
+
+        Toolbar topToolbar = (Toolbar) findViewById(R.id.topToolbar);
+        setSupportActionBar(topToolbar);
+
+        //Code relating to bottom toolbar
+        Point P = new Point(0,0);
+        getWindowManager().getDefaultDisplay().getSize(P);
+
+        Toolbar btmToolbar = (Toolbar) findViewById(R.id.btmToolbar);
+        btmToolbar.inflateMenu(R.menu.menu);
+        btmToolbar.setPadding(0
+                ,0
+                ,P.x/7
+                ,0);
+
+        btmToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+
+                switch (item.getItemId()) {
+                    case R.id.btnTakeAPic:
+                        onTakeaPicture();
+                        return true;
+                    case R.id.btnPic:
+                        onClickChoosePhoto();
+                        return true;
+                    case R.id.btnAnimate:
+                        onAnimate();
+                        return true;
+                    case R.id.btnChangeMusic:
+                        onChangeMusic();
+                        return true;
+                    case R.id.btnEditText:
+                        onEditText();
+                        return true;
+                }
+
+                return false;
+            }
+        });
+
+        imgviewPhoto = (ImageView) findViewById(R.id.photoView);
+
+        //used to draw a second layer over the image if needed
+        listImgviewGlasses = new ArrayList<>();
+
+        mediaPlayerParty = MediaPlayer.create(this, R.raw.wholikestoparty);
+        mediaPlayerParty.setLooping(true);
+
+        ToggleButton btnMute = (ToggleButton) findViewById(R.id.btnMute);
+
+
+        btnMute.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    mediaPlayerParty.setVolume(0, 0);
+                }
+                else {
+                    mediaPlayerParty.setVolume(1,1);
+                }
+            }
+        });
+
+        if( mAudioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE
+                || mAudioManager.getRingerMode() == AudioManager.RINGER_MODE_SILENT ) {
+            btnMute.setChecked(true);
+        }
+
+
+    }
+
 
 
     //Inflate menus.xml menu list to top toolbar
@@ -142,7 +248,6 @@ public class MainActivity extends AppCompatActivity {
     public String saveImage() {
 
         if (imgviewPhoto.getDrawable() != null) {
-
 
             File path;
             String appDirectoryName = "Dealwithit";
@@ -199,85 +304,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
 
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        //Set what the volume keys control
-        setVolumeControlStream(AudioManager.STREAM_MUSIC);
-
-        mAudioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
-
-        mAfListener =
-                new AudioManager.OnAudioFocusChangeListener() {
-                    @Override
-                    public void onAudioFocusChange(int focusChange) {
-                        if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
-                            mediaPlayerParty.pause();
-                        } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
-                            mediaPlayerParty.start();
-                        } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
-
-                            mAudioManager.abandonAudioFocus(mAfListener);
-                            // Stop playback
-                        }
-                    }
-                };
-
-
-
-
-        Toolbar topToolbar = (Toolbar) findViewById(R.id.topToolbar);
-        setSupportActionBar(topToolbar);
-
-        //Code relating to bottom toolbar
-        Point P = new Point(0,0);
-        getWindowManager().getDefaultDisplay().getSize(P);
-
-        Toolbar btmToolbar = (Toolbar) findViewById(R.id.btmToolbar);
-        btmToolbar.inflateMenu(R.menu.menu);
-        btmToolbar.setPadding(0
-                ,0
-                ,P.x/7
-                ,0);
-
-        btmToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-
-                switch (item.getItemId()) {
-                    case R.id.btnTakeAPic:
-                        onTakeaPicture();
-                        return true;
-                    case R.id.btnPic:
-                        onClickChoosePhoto();
-                        return true;
-                    case R.id.btnAnimate:
-                        onAnimate();
-                        return true;
-                    case R.id.btnChangeMusic:
-                        onChangeMusic();
-                        return true;
-                    case R.id.btnEditText:
-                        onEditText();
-                        return true;
-                }
-
-                return false;
-            }
-        });
-
-        imgviewPhoto = (ImageView) findViewById(R.id.photoView);
-
-        //used to draw a second layer over the image if needed
-        listImgviewGlasses = new ArrayList<>();
-
-        mediaPlayerParty = MediaPlayer.create(this, R.raw.wholikestoparty);
-        mediaPlayerParty.setLooping(true);
-
-    }
 
 
     public void onTakeaPicture() {
@@ -309,6 +336,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void resetHomeScreen() {
+
+
+        ToggleButton toggleButton = (ToggleButton) findViewById(R.id.btnMute);
+        toggleButton.setVisibility(View.VISIBLE);
 
         mediaPlayerParty.stop();
 
@@ -440,17 +471,30 @@ public class MainActivity extends AppCompatActivity {
                 if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
                         (keyCode == KeyEvent.KEYCODE_ENTER)) {
 
-                    txtView.setInputType(InputType.TYPE_NULL);
                     txtView.clearFocus();
+
+                    return true;
+                }
+
+                return false;
+            }
+        });
+
+        txtView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+
+                if(!hasFocus) {
+
                     txtView.setSelection(0);
                     txtView.setVisibility(View.INVISIBLE);
                     txtView.setEnabled(false);
 
-                    return true;
                 }
-                return false;
+
             }
         });
+
     }
 
 
@@ -701,10 +745,14 @@ public class MainActivity extends AppCompatActivity {
 
     public void onAnimate() {
 
-        RelativeLayout pictureLayout = (RelativeLayout) findViewById(R.id.pictureLayout);
+        ToggleButton toggleButton = (ToggleButton) findViewById(R.id.btnMute);
+        toggleButton.setVisibility(View.INVISIBLE);
 
         EditText t = (EditText) findViewById(R.id.txtDealWithIt);
+        t.clearFocus();
         t.setVisibility(View.VISIBLE);
+
+
         flashBackground();
 
 
