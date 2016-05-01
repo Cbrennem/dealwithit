@@ -49,6 +49,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.face.*;
 
@@ -105,6 +107,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        AdView mAdView = (AdView) findViewById(R.id.adBanner);
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                .build();
+        mAdView.loadAd(adRequest);
+
         //Set what the volume keys control
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
@@ -125,9 +133,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 };
-
-
-
 
 
         Toolbar topToolbar = (Toolbar) findViewById(R.id.topToolbar);
@@ -459,6 +464,7 @@ public class MainActivity extends AppCompatActivity {
         txtView.setEnabled(true);
         txtView.setVisibility(EditText.VISIBLE);
         txtView.setInputType(InputType.TYPE_CLASS_TEXT);
+        txtView.requestFocus();
         txtView.selectAll();
 
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
